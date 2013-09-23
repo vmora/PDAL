@@ -254,7 +254,7 @@ public:
     /// @param pointIndex position to start accessing
     inline boost::uint8_t* getData(boost::uint32_t pointIndex) const
     {
-        return (boost::uint8_t*)&(m_data.front()) + m_byteSize * pointIndex;
+        return const_cast<boost::uint8_t*>(&(m_data.front())) + m_byteSize * pointIndex;
     }
 
     /// copies the raw data into your own byte array and sets the size
