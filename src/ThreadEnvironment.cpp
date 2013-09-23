@@ -47,8 +47,9 @@ ThreadEnvironment::ThreadEnvironment(boost::thread::id id)
     , m_rng(0)
 {
     boost::posix_time::ptime epoch(boost::gregorian::date(1970,1,1));
-    boost::posix_time::ptime now = boost::posix_time::second_clock::local_time();
-    boost::int64_t anumber = (now-epoch).ticks();
+    boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+    boost::posix_time::time_duration diff = now - epoch;
+    boost::int64_t anumber = diff.total_milliseconds();
     m_rng = new boost::random::mt19937(anumber);
     
     return;
