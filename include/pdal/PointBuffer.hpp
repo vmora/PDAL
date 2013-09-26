@@ -147,7 +147,7 @@ public:
     /// Equivalent to getNumPoints() * getSchema() * getByteSize().
     inline boost::uint64_t getBufferByteLength() const
     {
-        return m_byteSize * m_numPoints;
+        return m_data.size();
     }
 
     /// returns the size of the theoretically filled raw byte array.
