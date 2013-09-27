@@ -574,11 +574,7 @@ boost::uint32_t Cache::readBufferImpl(PointBuffer& data)
 
     boost::uint64_t currentPointIndex = getIndex();
     
-    boost::uint32_t blockNumber(0);
-    if (currentPointIndex != 0)
-    {
-        blockNumber = cacheBlockSize / currentPointIndex;
-    }
+
 
     bool logOutput = m_cache_filter.log()->getLevel() > logDEBUG3;
 
@@ -588,7 +584,7 @@ boost::uint32_t Cache::readBufferImpl(PointBuffer& data)
     {
         if (logOutput)
         m_cache_filter.log()->get(logDEBUG3) << "random read had cache hit for block " 
-                                    << blockNumber << " with at point index " 
+                                    // << blockNumber << " with at point index " 
                                     << currentPointIndex << std::endl;
         
         // lookup will only return a list of blocks if things are 
@@ -599,30 +595,10 @@ boost::uint32_t Cache::readBufferImpl(PointBuffer& data)
             return data.getNumPoints();
     }
 
-    // We're cacheable if we're on the block boundary
-    const bool isCacheable = (data.getCapacity() == cacheBlockSize) &&
-                             (data.getNumPoints() == 0) &&
-                             (currentPointIndex % cacheBlockSize == 0) &&
-                             !blocks.size();
-    if (isCacheable)
-    {
-        const boost::uint32_t numRead = getPrevIterator().read(data);
-        
-        if (numRead != cacheBlockSize)
-        {
-            throw pdal_error("We did not read the same number of points as the cache size!");
-        }
-
-        m_cache_filter.addToCache(blockNumber, data);
-        m_cache_filter.updateStats(numRead, data.getCapacity());
-
-        return numRead;
-    }
-
 
     // Not in the cache, so do a normal read :-(
     const boost::uint32_t numRead = getPrevIterator().read(data);
-    m_cache_filter.updateStats(numRead, numRead);
+
 
     return numRead;
 }
