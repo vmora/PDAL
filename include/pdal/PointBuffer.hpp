@@ -244,7 +244,8 @@ public:
         boost::uint8_t* dest = getData(destPointIndex);
 
         assert(m_numPoints <= m_capacity);
-        memcpy(dest, src, m_byteSize * numPoints);
+        boost::uint64_t size = static_cast<boost::uint64_t>(m_byteSize) * static_cast<boost::uint64_t>(numPoints);
+        memcpy(dest, src, size);
         return;
     }
 
@@ -254,7 +255,8 @@ public:
     /// @param pointIndex position to start accessing
     inline boost::uint8_t* getData(boost::uint32_t pointIndex) const
     {
-        return const_cast<boost::uint8_t*>(&(m_data.front())) + m_byteSize * pointIndex;
+        boost::uint64_t size = static_cast<boost::uint64_t>(m_byteSize) * static_cast<boost::uint64_t>(pointIndex);
+        return const_cast<boost::uint8_t*>(&(m_data.front())) + size;
     }
 
     /// copies the raw data into your own byte array and sets the size
