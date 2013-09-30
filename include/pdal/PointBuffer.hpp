@@ -154,7 +154,7 @@ public:
     /// Equivalent to getCapacity() * getSchema() * getByteSize().
     inline boost::uint64_t getBufferByteCapacity() const
     {
-        return m_byteSize * m_capacity;
+        return static_cast<boost::uint64_t>(m_byteSize) * static_cast<boost::uint64_t>(m_capacity);
     }
 
     /** @name Point data access
@@ -374,7 +374,7 @@ inline void PointBuffer::setField(pdal::Dimension const& dim, boost::uint32_t po
     }
     
     boost::uint64_t point_start_byte_position = static_cast<boost::uint64_t>(pointIndex) * static_cast<boost::uint64_t>(m_byteSize); 
-    boost::uint64_t offset = point_start_byte_position + dim.getByteOffset();
+    boost::uint64_t offset = point_start_byte_position + static_cast<boost::uint64_t>(dim.getByteOffset());
     boost::uint64_t array_size = static_cast<boost::uint64_t>(m_capacity) * static_cast<boost::uint64_t>(m_byteSize); 
 
     assert(offset + sizeof(T) <= array_size);
@@ -405,7 +405,7 @@ inline  T const& PointBuffer::getField(pdal::Dimension const& dim, boost::uint32
     }
 
     boost::uint64_t point_start_byte_position = static_cast<boost::uint64_t>(pointIndex) * static_cast<boost::uint64_t>(m_byteSize); 
-    boost::uint64_t offset = point_start_byte_position + dim.getByteOffset();
+    boost::uint64_t offset = point_start_byte_position + static_cast<boost::uint64_t>(dim.getByteOffset());
 
 #ifdef DEBUG
     // This test ends up being somewhat expensive when run for every field 
