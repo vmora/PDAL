@@ -251,7 +251,7 @@ boost::uint32_t Reader::processBuffer(PointBuffer& data,
 	bool bFirstPoint(true);
     for (boost::uint32_t pointIndex=0; pointIndex<numPoints; pointIndex++)
     {
-        boost::uint8_t* p = &(read_buffer.front()) + pointByteCount * pointIndex;
+        boost::uint8_t* p = &(read_buffer.front()) + static_cast<boost::uint64_t>(pointByteCount) * static_cast<boost::uint64_t>(pointIndex);
 
         // always read the base fields
         {
