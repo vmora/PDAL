@@ -208,7 +208,7 @@ boost::uint64_t Writer::write(  boost::uint64_t targetNumPointsToWrite,
         {
             const boost::uint64_t numRemainingPointsToRead = targetNumPointsToWrite - actualNumPointsWritten;
 
-            const boost::uint64_t numPointsToReadThisChunk64 = std::min<boost::uint64_t>(numRemainingPointsToRead, m_chunkSize);
+            const boost::uint64_t numPointsToReadThisChunk64 = std::min<boost::uint64_t>(numRemainingPointsToRead, static_cast<boost::uint64_t>(m_chunkSize));
             // this case is safe because m_chunkSize is a uint32
             const boost::uint32_t numPointsToReadThisChunk = static_cast<boost::uint32_t>(numPointsToReadThisChunk64);
 
