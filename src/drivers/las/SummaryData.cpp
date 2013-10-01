@@ -116,7 +116,7 @@ void SummaryData::addPoint(double x, double y, double z, int returnNumber)
 }
 
 
-boost::uint32_t SummaryData::getTotalNumPoints() const
+boost::uint64_t SummaryData::getTotalNumPoints() const
 {
     return m_totalNumPoints;
 }

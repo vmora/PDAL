@@ -103,7 +103,7 @@ protected:
 
 private:
     LasHeader m_lasHeader;
-    boost::uint32_t m_numPointsWritten;
+    boost::uint64_t m_numPointsWritten;
     SummaryData m_summaryData;
 
 #ifdef PDAL_HAVE_LASZIP

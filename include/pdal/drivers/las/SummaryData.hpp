@@ -57,7 +57,7 @@ public:
     // note that returnNumber is in the range [0..4]
     void addPoint(double x, double y, double z, int returnNumber);
 
-    boost::uint32_t getTotalNumPoints() const;
+    boost::uint64_t getTotalNumPoints() const;
 
     void getBounds(double& minX, double& minY, double& minZ, double& maxX, double& maxY, double& maxZ) const;
 
@@ -77,7 +77,7 @@ private:
     double m_maxY;
     double m_maxZ;
     boost::uint32_t m_returnCounts[s_maxNumReturns];
-    boost::uint32_t m_totalNumPoints;
+    boost::uint64_t m_totalNumPoints;
 
     SummaryData& operator=(const SummaryData&); // not implemented
     SummaryData(const SummaryData&); // not implemented

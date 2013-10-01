@@ -523,9 +523,10 @@ void Writer::writeBufferBegin(PointBuffer const& data)
 
 void Writer::writeEnd(boost::uint64_t /*actualNumPointsWritten*/)
 {
-    m_lasHeader.SetPointRecordsCount(m_numPointsWritten);
+    m_lasHeader.SetPointRecordsCount(static_cast<boost::uint32_t>(m_numPointsWritten));
 
     log()->get(logDEBUG) << "Wrote " << m_numPointsWritten << " points to the LAS file" << std::endl;
+    log()->get(logDEBUG2) << "Stream offset " << m_streamOffset <<  std::endl;
 
     m_streamManager.ostream().seekp(m_streamOffset);
     Support::rewriteHeader(m_streamManager.ostream(), m_summaryData);
@@ -543,10 +544,11 @@ boost::uint32_t Writer::writeBuffer(const PointBuffer& pointBuffer)
     const Schema& schema = pointBuffer.getSchema();
 
     PointFormat pointFormat = m_lasHeader.getPointFormat();
-
+    log()->get(logDEBUG2) << "Writing points as point format: " << static_cast<boost::uint32_t>(pointFormat) <<  std::endl;    
+    log()->get(logDEBUG2) << "Asked to write : " << pointBuffer.getNumPoints() << " points" << std::endl;
     const PointDimensions dimensions(schema,"");
 
-    boost::uint32_t numValidPoints = 0;
+    boost::uint64_t numValidPoints = 0;
 
     boost::uint8_t buf[64]; // BUG: fixed size
     
@@ -557,7 +559,7 @@ boost::uint32_t Writer::writeBuffer(const PointBuffer& pointBuffer)
     for (boost::uint32_t pointIndex=0; pointIndex<pointBuffer.getNumPoints(); pointIndex++)
     {
         boost::uint8_t* p = buf;
-
+        
         // we always write the base fields
         boost::int32_t const& x = pointBuffer.getField<boost::int32_t>(*dimensions.X, pointIndex);
         boost::int32_t const& y = pointBuffer.getField<boost::int32_t>(*dimensions.Y, pointIndex);
@@ -579,7 +581,7 @@ boost::uint32_t Writer::writeBuffer(const PointBuffer& pointBuffer)
                 {
 
                     boost::uint8_t const& intensity = pointBuffer.getField<boost::uint8_t>(*dimensions.Intensity, pointIndex);
-                    boost::uint16_t output = dimensions.Intensity->convert<boost::uint16_t>((void*) intensity);
+                    boost::uint16_t output = static_cast<boost::uint16_t>(intensity);
                     Utils::write_field<boost::uint16_t>(p, output);
                 }
             }
@@ -729,7 +731,7 @@ boost::uint32_t Writer::writeBuffer(const PointBuffer& pointBuffer)
         m_summaryData.addPoint(xValue, yValue, zValue, returnNumber);
     }
 
-    m_numPointsWritten = m_numPointsWritten+numValidPoints;
+    m_numPointsWritten = m_numPointsWritten+numValidPoints;    
     return numValidPoints;
 }
 

@@ -311,12 +311,11 @@ void Support::rewriteHeader(std::ostream& stream, const SummaryData& data)
 {
     // move from header start to "number of point records" field
     stream.seekp(107, std::ios_base::cur);
-
     {
         boost::uint8_t buf[256];
         boost::uint8_t* p = buf;
 
-        Utils::write_field<boost::uint32_t>(p, data.getTotalNumPoints());
+        Utils::write_field<boost::uint32_t>(p, static_cast<boost::uint32_t>(data.getTotalNumPoints()));
 
         for (int i=1; i<=SummaryData::s_maxNumReturns; i++)
         {
@@ -345,7 +344,6 @@ void Support::rewriteHeader(std::ostream& stream, const SummaryData& data)
     }
 
     stream.seekp(0, std::ios_base::end);
-
     return;
 }
 
