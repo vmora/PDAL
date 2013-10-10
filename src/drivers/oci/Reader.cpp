@@ -728,8 +728,8 @@ void IteratorBase::fillUserBuffer(PointBuffer& user_buffer)
 
     bool bSetPointSourceId = getReader().getOptions().getValueOrDefault<bool>("populate_pointsourceid", false);
     if (bSetPointSourceId)
-    {  
-        Dimension const* point_source_field = &(user_buffer.getSchema().getDimensionOptional("PointSourceId").get());
+    {
+        boost::optional<Dimension const&> point_source_field = user_buffer.getSchema().getDimensionOptional("PointSourceId");  
         if (point_source_field)
         {  
             for (boost::int32_t i = 0; i < howManyThisRead; ++i)
