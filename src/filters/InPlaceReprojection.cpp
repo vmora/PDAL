@@ -256,8 +256,25 @@ Schema InPlaceReprojection::alterSchema(Schema& schema)
     log()->floatPrecision(8);
 
     log()->get(logDEBUG2) << "original offset x,y: " << offset_x <<"," << offset_y << std::endl;
-    reprojectOffsets(offset_x, offset_y, offset_z);
-    log()->get(logDEBUG2) << "reprojected offset x,y: " << offset_x <<"," << offset_y << std::endl;
+
+    try
+    {
+        reprojectOffsets(offset_x, offset_y, offset_z);        
+        log()->get(logDEBUG2) << "reprojected offset x,y: " 
+                              << offset_x <<"," 
+                              << offset_y << std::endl;
+    } catch (pdal::pdal_error&)
+    {
+        // If we failed to reproject the offsets, we're going to just use
+        // what we have
+        /* If user-specified offsets exist, use those instead of the reprojected offsets */
+        offset_x = getOptions().getValueOrDefault<double>("offset_x", offset_x);
+        offset_y = getOptions().getValueOrDefault<double>("offset_y", offset_y);
+        offset_z = getOptions().getValueOrDefault<double>("offset_z", offset_z);
+        log()->get(logDEBUG2) << "Default offset used due to inability to reproject original offset x,y: " 
+                              << offset_x <<"," 
+                              << offset_y << std::endl;
+    }
 
     double scale_x = getOptions().getValueOrDefault<double>("scale_x", dimX.getNumericScale());
     double scale_y = getOptions().getValueOrDefault<double>("scale_y", dimY.getNumericScale());
