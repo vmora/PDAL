@@ -8,9 +8,9 @@ P2G_HOME=$USR_LOCAL
 HEXER_HOME="/Users/hobu/dev/git/hexer"
 SQLITE_HOME="/usr/local/opt/sqlite"
 SO_EXT=dylib
-EMBED=ON
-CC=/Users/hobu/bin/clang
-CXX=/Users/hobu/bin/clang++
+EMBED=OFF
+#CC=/Users/hobu/bin/clang
+#CXX=/Users/hobu/bin/clang++
 
 ORACLE_HOME=$HOME/oracle
 export ORACLE_HOME
