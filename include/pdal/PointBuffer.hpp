@@ -259,9 +259,13 @@ public:
         assert (srcPointBuffer.getSchema().getOrientation() == getSchema().getOrientation() && getSchema().getOrientation() != schema::DIMENSION_INTERLEAVED);
         const boost::uint8_t* src = srcPointBuffer.getData(srcPointIndex);
         boost::uint8_t* dest = getData(destPointIndex);
-
+        
+        pointbuffer::PointBufferByteSize count(0);
+        count = static_cast<pointbuffer::PointBufferByteSize>(m_byteSize)* \
+                static_cast<pointbuffer::PointBufferByteSize>(numPoints);
+            
         assert(m_numPoints <= m_capacity);
-        memcpy(dest, src, m_byteSize * numPoints);
+        memcpy(dest, src, count);
         return;
     }
 
