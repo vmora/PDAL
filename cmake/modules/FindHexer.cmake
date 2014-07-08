@@ -66,8 +66,13 @@ IF(HEXER_INCLUDE_DIR)
   IF (DEFINED HEXER_VERSION_H_CONTENTS)
     string(REGEX REPLACE ".*#define[ \t]HEXER_VERSION_MAJOR[ \t]+([0-9]+).*" "\\1" HEXER_VERSION_MAJOR "${HEXER_VERSION_H_CONTENTS}")
     string(REGEX REPLACE ".*#define[ \t]HEXER_VERSION_MINOR[ \t]+([0-9]+).*" "\\1" HEXER_VERSION_MINOR "${HEXER_VERSION_H_CONTENTS}")
-    string(REGEX REPLACE ".*#define[ \t]HEXER_VERSION_PATCH[ \t]+([0-9]+).*"   "\\1" HEXER_VERSION_PATCH   "${HEXER_VERSION_H_CONTENTS}")
 
+    string(REGEX REPLACE ".*#define[ \t]HEXER_VERSION_REVISION[ \t]+([0-9]+).*"   "\\1" HEXER_VERSION_PATCH   "${HEXER_VERSION_H_CONTENTS}")
+    
+    if (NOT ${HEXER_VERSION_PATCH})
+      string(REGEX REPLACE ".*#define[ \t]HEXER_VERSION_PATCH[ \t]+([0-9]+).*"   "\\1" HEXER_VERSION_PATCH   "${HEXER_VERSION_H_CONTENTS}")
+    endif()
+    
     if(NOT ${HEXER_VERSION_MAJOR} MATCHES "[0-9]+")
       message(FATAL_ERROR "Hexer version parsing failed for HEXER_VERSION_MAJOR!")
     endif()
