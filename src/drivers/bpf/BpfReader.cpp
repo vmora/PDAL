@@ -40,11 +40,13 @@ namespace pdal
 {
 
 BpfReader::BpfReader(const Options& options) : Reader(options),
-    m_stream(options.getValueOrThrow<std::string>("filename"))
+    m_stream(options.getValueOrThrow<std::string>("filename")),
+    m_header(log())
 {}
 
 
-BpfReader::BpfReader(const std::string& filename) : m_stream(filename)
+BpfReader::BpfReader(const std::string& filename) : m_stream(filename),
+    m_header(log())
 {}
 
 
@@ -56,21 +58,22 @@ void BpfReader::initialize()
     // In order to know the dimensions we must read the file header.
     if (!m_header.read(m_stream))
         return;
-
-    m_dims.insert(m_dims.end(), m_header.m_numDim, BpfDimension());
-    if (!BpfDimension::read(m_stream, m_dims))
+    if (!m_header.readDimensions(m_stream, m_dims))
         return;
 
-    readUlemData();
-    if (!m_stream)
-        return;
-    readPolarData();
+    if (m_header.m_version >= 3)
+    {
+        readUlemData();
+        if (!m_stream)
+            return;
+        readPolarData();
+    }
 
 #ifdef PDAL_HAVE_GDAL
     uint32_t zone(abs(m_header.m_coordId));
     std::string code("");
     if (m_header.m_coordId > 0)
-        code = "EPSG:269" + boost::lexical_cast<std::string>(zone);
+        code = "EPSG:326" + boost::lexical_cast<std::string>(zone);
     else
         code = "EPSG:327" + boost::lexical_cast<std::string>(zone);
     SpatialReference srs(code);
