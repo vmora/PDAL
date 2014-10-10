@@ -32,7 +32,7 @@ CC=$CC CXX=$CXX cmake   -G "$CONFIG"  \
         -DWITH_NITRO=ON \
         -DWITH_MRSID=OFF \
         -DWITH_HDF5=ON \
-        -DWITH_PCL=ON \
+        -DWITH_PCL=OFF \
         -DWITH_PGPOINTCLOUD=ON \
         -DPCL_DIR=/Users/hobu/dev/git/pcl/installed/share/pcl-1.7/ \
         -DMRSID_INCLUDE_DIR=/Users/hobu/dev/release/mrsid/Lidar_DSDK/include \
@@ -49,7 +49,7 @@ CC=$CC CXX=$CXX cmake   -G "$CONFIG"  \
         -DLIBXML2_INCLUDE_DIR=${LIBXML2_HOME}/include/libxml2 \
         -DLIBXML2_LIBRARIES=${LIBXML2_HOME}/lib/libxml2.${SO_EXT} \
         -DSQLITE3_INCLUDE_DIR=${SQLITE_HOME}/include \
-        -DSQLITE3_LIBRARY=${SQLITE_HOME}/lib/libsqlite3.${SO_EXT} 
+        -DSQLITE3_LIBRARY=${SQLITE_HOME}/lib/libsqlite3.${SO_EXT}
 
     # -DUSE_PDAL_PLUGIN_SOCI=ON \
     # -DUSE_PDAL_PLUGIN_PCD=ON \
