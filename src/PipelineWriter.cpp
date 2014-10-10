@@ -155,22 +155,11 @@ void PipelineWriter::writePipeline(const std::string& filename) const
 
     boost::property_tree::ptree tree = generateTreeFromStage(*stage);
 
-//ABELL
-/**
-    if (m_buffer)
-    {
-        boost::property_tree::ptree metadata_tree;
-
-        //ABELL - Help.
-        Metadata m = m_buffer->getMetadata();
-        write_metadata_ptree(metadata_tree, m.getNode());
-        boost::property_tree::ptree & child = tree.get_child("Pipeline");
-        child.add_child("PointBuffer", metadata_tree);
-    }
-**/
-
+#if (BOOST_VERSION / 100 % 1000 > 55) // 1.55+
+    auto settings = boost::property_tree::xml_writer_make_settings<std::string> (' ', 4);
+#else
     const boost::property_tree::xml_parser::xml_writer_settings<char> settings(' ', 4);
-
+#endif
     if (boost::iequals(filename, "STDOUT"))
         boost::property_tree::xml_parser::write_xml(std::cout, tree);
     else
