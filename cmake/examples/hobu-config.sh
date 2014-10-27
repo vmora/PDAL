@@ -32,6 +32,7 @@ CC=$CC CXX=$CXX cmake   -G "$CONFIG"  \
         -DWITH_NITRO=ON \
         -DWITH_MRSID=OFF \
         -DWITH_HDF5=ON \
+        -DWITH_LIBXML2=ON \
         -DWITH_PCL=OFF \
         -DWITH_PGPOINTCLOUD=ON \
         -DPCL_DIR=/Users/hobu/dev/git/pcl/installed/share/pcl-1.7/ \
