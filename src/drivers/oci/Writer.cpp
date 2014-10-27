@@ -87,7 +87,7 @@ Writer::~Writer()
 
 void Writer::initialize()
 {
-    GlobalEnvironment::get().getGDALDebug()->addLog(log());    
+    GlobalEnvironment::get().getGDALDebug()->addLog(log());
     m_connection = connect(m_connSpec);
     m_gtype = getGType();
 }
@@ -600,6 +600,8 @@ void Writer::createPCEntry(Schema const& buffer_schema)
     schema.setOrientation(m_orientation);
     std::string schemaData = Schema::to_xml(schema);
 
+    if (!schemaData.size()) throw pdal_error("Schema XML has no size!");
+
     oss << "declare\n"
         "  pc_id NUMBER := :" << nPCPos << ";\n"
         "  pc sdo_pc;\n"
@@ -689,8 +691,8 @@ void Writer::createPCEntry(Schema const& buffer_schema)
 
     //ABELL - I don't get this.  Why do we get the value?  It doesn't look
     //  like we ever retreive the option anyplace else.
-    //HOBU - because the SDO_PC.init method returns a database value for the 
-    //  object it created. We want to reflect that in metadata in addition to  
+    //HOBU - because the SDO_PC.init method returns a database value for the
+    //  object it created. We want to reflect that in metadata in addition to
     //  using it for the obj_id when writing the blocks
     //ABELL - But how is it ever written?  What I don't see is that its value
     //  AS AN OPTION is ever used (we never seem to retrieve the option
@@ -846,7 +848,7 @@ void Writer::done(PointContext ctx)
 {
     if (!m_connection)
         return;
-    
+
     m_connection->Commit();
     if (m_createIndex && m_bDidCreateBlockTable)
     {
@@ -986,7 +988,7 @@ void Writer::writeTile(PointBuffer const& buffer)
         srid = m_srid;
     statement->Bind(&srid);
     log()->get(logDEBUG4) << "OCI SRID " << srid << std::endl;
-    
+
 
     // :7
     OCIArray* sdo_elem_info = 0;
@@ -1015,7 +1017,7 @@ void Writer::writeTile(PointBuffer const& buffer)
         long long_partition_id = (long)m_blockTablePartitionValue;
         statement->Bind(&long_partition_id);
         log()->get(logDEBUG4) << "Partition ID " << long_partition_id <<
-            std::endl;        
+            std::endl;
     }
 
     try
