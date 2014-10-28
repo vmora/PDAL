@@ -124,6 +124,20 @@ void NitfReader::initialize()
     MetadataNode lasNode = m_metadata.add(las::Reader::getName());
     m_metadata.add("LAS_OFFSET", m_offset);
     m_metadata.add("LAS_LENGTH", m_length);
+
+    try
+    {
+        setSpatialReference(getOptions().
+            getValueOrThrow<pdal::SpatialReference>("spatialreference"));
+        las::Reader::setSpatialReference(getSpatialReference());
+    }
+    catch (pdal_error const&)
+    {
+        // If one wasn't set on the options, we'll ignore at this
+        // point.
+    }
+
+
     las::Reader::initialize(lasNode);
 }
 
