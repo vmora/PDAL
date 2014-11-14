@@ -35,7 +35,7 @@
 #ifndef INCLUDED_PDAL_HDF5_HANDLER_HPP
 #define INCLUDED_PDAL_HDF5_HANDLER_HPP
 
-#include "H5cpp.h"
+#include "H5Cpp.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/cstdint.hpp>
