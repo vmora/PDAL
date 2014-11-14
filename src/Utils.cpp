@@ -154,6 +154,14 @@ void Utils::eatwhitespace(istream& s)
     return;
 }
 
+void Utils::removeTrailingBlanks(std::string& s)
+{
+    size_t pos = s.size();
+    while (isspace(s[--pos]))
+        ;
+    s = s.substr(0, pos);
+}
+
 bool Utils::eatcharacter(istream& s, char x)
 {
     const char c = (char)s.peek();

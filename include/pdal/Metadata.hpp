@@ -304,6 +304,19 @@ public:
         return MetadataNode(impl);
     }
 
+    MetadataNode addEncoded(const std::string& name,
+        const unsigned char *buf, size_t size,
+        const std::string& descrip = std::string())
+    {
+        MetadataNodeImplPtr impl = m_impl->add(name);
+        std::vector<uint8_t> v(size); 
+        memcpy(v.data(), buf, size);
+        impl->setValue(Utils::base64_encode(v));
+        impl->m_type = "base64Binary";
+        impl->m_descrip = descrip;
+        return MetadataNode(impl);
+    }
+
     template<typename T>
     MetadataNode addOrUpdate(const std::string& lname, const T& value)
     {

@@ -80,6 +80,9 @@ void BpfReader::initialize()
     setSpatialReference(srs);
 #endif
 
+    // Read thing after the standard header as metadata.
+    readHeaderExtraData();
+
     // Fast forward file to end of header as reported by base header.
     std::streampos pos = m_stream.position();
     if (pos > m_header.m_len)
@@ -102,6 +105,7 @@ void BpfReader::buildSchema(Schema *schema)
     }
 }
 
+
 bool BpfReader::readUlemData()
 {
     if (!m_ulemHeader.read(m_stream))
@@ -114,13 +118,31 @@ bool BpfReader::readUlemData()
             return false;
         m_ulemFrames.push_back(frame);
     }
-
-    BpfUlemFile file;
-    while (file.read(m_stream))
-        ;
-
     return (bool)m_stream;
 }
+
+
+bool BpfReader::readUlemFiles()
+{
+    BpfUlemFile file;
+    while (file.read(m_stream))
+        m_metadata.addEncoded(file.m_filename,
+            (const unsigned char *)file.m_buf.data(), file.m_len);
+    return (bool)m_stream;
+}
+
+
+/// Encode all data that follows the headers as metadata.
+/// \return  Whether the stream is still valid.
+bool BpfReader::readHeaderExtraData()
+{
+    std::streampos size = m_header.m_len - m_stream.position();
+    std::vector<uint8_t> buf(size);
+    m_stream.get(buf);
+    m_metadata.addEncoded("header_data", buf.data(), buf.size());
+    return (bool)m_stream;
+}
+
 
 bool BpfReader::readPolarData()
 {

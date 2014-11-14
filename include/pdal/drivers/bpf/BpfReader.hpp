@@ -72,6 +72,8 @@ private:
     virtual void initialize();
     virtual void buildSchema(Schema *schema);
     bool readUlemData();
+    bool readUlemFiles();
+    bool readHeaderExtraData();
     bool readPolarData();
 };
 

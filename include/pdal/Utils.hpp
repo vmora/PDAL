@@ -206,6 +206,7 @@ public:
 
     // aid to operator>> parsers
     static void eatwhitespace(std::istream& s);
+    static void removeTrailingBlanks(std::string& s);
 
     // aid to operator>> parsers
     // if char found, eats it and returns true; otherwise, don't eat it and

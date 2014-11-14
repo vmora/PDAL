@@ -118,6 +118,11 @@ public:
         m_stream->read(&buf[0], buf.size());
     }
 
+    void get(std::vector<unsigned char>& buf)
+    {
+        m_stream->read((char *)&buf[0], buf.size());
+    }
+
     ILeStream& operator >> (uint8_t& v)
     {
         v = (uint8_t)m_stream->get();
