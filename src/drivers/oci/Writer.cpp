@@ -39,6 +39,7 @@
 #include <pdal/PointBuffer.hpp>
 #include <pdal/StageFactory.hpp>
 #include <pdal/GlobalEnvironment.hpp>
+#include <pdal/Compression.hpp>
 
 #include <pdal/drivers/oci/Writer.hpp>
 
@@ -597,8 +598,28 @@ void Writer::createPCEntry(Schema const& buffer_schema)
     s_geom << "))";
 
     Schema schema(m_dims);
+    if (m_orientation == schema::DIMENSION_INTERLEAVED && m_doCompression == true)
+        throw pdal_error("Cannot compress DIMENSION_INTERLEAVED orientation!");
+
     schema.setOrientation(m_orientation);
-    std::string schemaData = Schema::to_xml(schema);
+
+    std::string schemaData;
+    if (m_doCompression)
+    {
+
+        MetadataNode m("root");
+        m.add("compression", "lazperf");
+        m.add("version", "1.0");
+        schemaData = Schema::to_xml(schema, m);
+        assert(schema.getByteSize() == m_pointSize);
+        std::ostream* out = FileUtils::createFile("comp-written-metadata.xml");
+        out->write(schemaData.c_str(), schemaData.size());
+        FileUtils::closeFile(out);
+
+    } else
+    {
+        schemaData = Schema::to_xml(schema);
+    }
 
     if (!schemaData.size()) throw pdal_error("Schema XML has no size!");
 
@@ -771,6 +792,8 @@ void Writer::processOptions(const Options& options)
         options.getValueOrDefault<bool>("store_dimensional_orientation", false);
     m_orientation = dimInterleaved ? schema::DIMENSION_INTERLEAVED :
         schema::POINT_INTERLEAVED;
+    m_doCompression =
+        options.getValueOrDefault<bool>("compression", false);
     m_capacity = options.getValueOrThrow<uint32_t>("capacity");
     m_connSpec = options.getValueOrDefault<std::string>("connection", "");
 }
@@ -936,6 +959,7 @@ void Writer::writeTile(PointBuffer const& buffer)
     size_t outbufSize = m_pointSize * buffer.size();
     std::unique_ptr<char> outbuf(new char[outbufSize]);
     char *pos = outbuf.get();
+    char *blobPtr(0);
     m_callback->setTotal(buffer.size());
     m_callback->invoke(0);
     if (m_orientation == schema::DIMENSION_INTERLEAVED)
@@ -964,17 +988,42 @@ void Writer::writeTile(PointBuffer const& buffer)
                 m_callback->invoke(id);
         }
     }
+    OCICompressionStream compStream;
+    if (m_doCompression)
+    {
+        log()->get(logDEBUG4) << "compressing block " << outbufSize << std::endl;
+        const char* start_pos = outbuf.get();
+        const char* end_pos = start_pos + outbufSize;
+
+
+        compression::Compress<OCICompressionStream>(m_dims,
+                                                    m_pointSize,
+                                                    start_pos,
+                                                    end_pos,
+                                                    compStream,
+                                                    compression::CompressionType::Lazperf,
+                                                    0,
+                                                    buffer.size());
+        outbufSize = compStream.buf.size();
+
+        log()->get(logDEBUG4) << "compressed block " << outbufSize << std::endl;
+        blobPtr = (char*)compStream.buf.data();
+    }
+    else
+    {
+        blobPtr = outbuf.get();
+    }
     m_callback->invoke(buffer.size());
 
     log()->get(logDEBUG4) << "Blob size " << outbufSize << std::endl;
     OCILobLocator* locator;
     if (m_streamChunks)
     {
-        statement->WriteBlob(&locator, outbuf.get(), outbufSize, m_chunkCount);
+        statement->WriteBlob(&locator, blobPtr, outbufSize, m_chunkCount);
         statement->BindBlob(&locator);
     }
     else
-        statement->Bind(outbuf.get(), (long)outbufSize);
+        statement->Bind(blobPtr, (long)outbufSize);
 
     // :5
     long long_gtype = static_cast<long>(m_gtype);
@@ -1039,6 +1088,7 @@ void Writer::writeTile(PointBuffer const& buffer)
 
     m_connection->DestroyType(&sdo_elem_info);
     m_connection->DestroyType(&sdo_ordinates);
+//     m_compStream.buf.clear();
 }
 
 

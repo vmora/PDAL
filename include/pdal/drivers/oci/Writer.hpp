@@ -66,7 +66,7 @@ public:
     SET_STAGE_ENABLED(true)
 #else
     SET_STAGE_ENABLED(false)
-#endif    
+#endif
     Writer(const Options&);
     ~Writer();
 
@@ -77,7 +77,7 @@ protected:
     {}
     virtual void writeBufferBegin(PointBuffer const&)
     {}
-    
+
     virtual boost::uint32_t writeBuffer(const PointBuffer&)
     { return 0; }
 
@@ -145,6 +145,7 @@ private:
     bool m_overwrite;
     bool m_trace;
     bool m_pack;
+    bool m_doCompression;
 
     std::string m_baseTableName;
     std::string m_cloudColumnName;
@@ -163,6 +164,7 @@ private:
     bool m_streamChunks;
     schema::Orientation m_orientation;
     std::string m_connSpec;
+    OCICompressionStream m_compStream;
 
     std::vector<Dimension> m_dims;
 };

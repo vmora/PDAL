@@ -138,7 +138,7 @@ endif(WIN32)
 # note we default to debug mode
 if(NOT MSVC_IDE)
   if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Debug CACHE STRING 
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING
     "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel" FORCE)
   endif()
   message(STATUS "Setting PDAL build type - ${CMAKE_BUILD_TYPE}")
@@ -173,7 +173,7 @@ if(WIN32)
       add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 	  add_definitions(-DNOMINMAX)
     endif()
-    
+
     if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
       string(REGEX REPLACE "/W[0-4]" "/W4"
         CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -194,7 +194,7 @@ if(WIN32)
     endif()
 
   endif(MSVC)
-  
+
   set(CMAKE_INCLUDE_PATH "c:/OSGeo4W64/include;$ENV{CMAKE_INCLUDE_PATH}")
   set(CMAKE_LIBRARY_PATH "c:/OSGeo4W64/lib;$ENV{CMAKE_LIBRARY_PATH}")
 
@@ -238,9 +238,9 @@ endif(APPLE)
 
 find_package(Threads)
 
-# Default to using static, multithreaded libraries for 
-# linking under MSVC.  This is because we show users how to 
-# use boostpro.com installer and install those options when linking 
+# Default to using static, multithreaded libraries for
+# linking under MSVC.  This is because we show users how to
+# use boostpro.com installer and install those options when linking
 # on windows in the compilation documentation.
 if(WIN32)
   if (MSVC)
@@ -261,10 +261,10 @@ if(Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIRS})
 
   # make these available for the user to set.
-  mark_as_advanced(CLEAR Boost_INCLUDE_DIR) 
-  mark_as_advanced(CLEAR Boost_LIBRARY_DIRS) 
+  mark_as_advanced(CLEAR Boost_INCLUDE_DIR)
+  mark_as_advanced(CLEAR Boost_LIBRARY_DIRS)
   link_directories(${Boost_LIBRARY_DIRS})
- 
+
 else()
   set(BOOST_ROOT "${PROJECT_SOURCE_DIR}/boost")
 
@@ -295,6 +295,17 @@ else()
 endif(Boost_FOUND)
 
 
+option(WITH_COMPRESSION "Choose to use laz-perf compression for database drivers" FALSE)
+if (WITH_COMPRESSION)
+    find_package(Lazperf)
+    if (LAZPERF_FOUND)
+        include_directories(${LAZPERF_INCLUDE_DIR})
+        set(PDAL_HAVE_LAZPERF 1)
+    else()
+        set(WITH_COMPRESSION FALSE)
+    endif()
+endif()
+
 #------------------------------------------------------------------------------
 # settings for PCL
 #------------------------------------------------------------------------------
@@ -312,7 +323,7 @@ if(WITH_PCL)
             # PCL's configuration clobbers Boost find_package - do it again
           find_package(Boost 1.52 COMPONENTS program_options thread iostreams filesystem system unit_test_framework random)
         endif()
-        
+
         message(STATUS "...building with PCL")
     else()
         set(PCL_LIBRARIES "")
@@ -326,7 +337,7 @@ endif()
 #------------------------------------------------------------------------------
 # settings for GDAL & related dependencies
 #------------------------------------------------------------------------------
-   
+
 # GDAL/OGR support - optional, default=ON
 option(WITH_GDAL "Choose if GDAL support should be built" TRUE)
 if(WITH_GDAL)
@@ -334,7 +345,7 @@ if(WITH_GDAL)
     if (GDAL_FOUND)
         set(PDAL_HAVE_GDAL 1)
         include_directories("${GDAL_INCLUDE_DIR}")
-        mark_as_advanced(CLEAR GDAL_INCLUDE_DIR) 
+        mark_as_advanced(CLEAR GDAL_INCLUDE_DIR)
         mark_as_advanced(CLEAR GDAL_LIBRARY)
         message(STATUS "...building with GDAL")
     else()
@@ -360,8 +371,8 @@ if(WITH_GEOTIFF)
     if(GEOTIFF_FOUND)
         include_directories("${GEOTIFF_INCLUDE_DIR}")
         set(PDAL_HAVE_LIBGEOTIFF 1)
-        mark_as_advanced(CLEAR TIFF_INCLUDE_DIR) 
-        mark_as_advanced(CLEAR TIFF_LIBRARY) 
+        mark_as_advanced(CLEAR TIFF_INCLUDE_DIR)
+        mark_as_advanced(CLEAR TIFF_LIBRARY)
         if (WIN32)
             set(TIFF_NAMES libtiff_i)
         endif(WIN32)
@@ -381,7 +392,7 @@ endif()
 option(WITH_SQLITE "Choose if sqlite database support should be built" FALSE)
 if (WITH_SQLITE)
     find_package(SQLite3)
-    mark_as_advanced(CLEAR SQLITE3_INCLUDE_DIR) 
+    mark_as_advanced(CLEAR SQLITE3_INCLUDE_DIR)
     mark_as_advanced(CLEAR SQLITE3_LIBRARY)
     include_directories(${SQLITE3_INCLUDE_DIR})
     set(PDAL_HAVE_SQLITE 1)
@@ -427,7 +438,7 @@ if(WITH_NITRO)
         message(STATUS "...building with Nitro")
     else()
         set(WITH_NITRO FALSE)
-        set(NITRO_LIBRARIES "")   
+        set(NITRO_LIBRARIES "")
     endif()
 endif()
 
@@ -526,12 +537,12 @@ mark_as_advanced(WITH_STATIC_LASZIP)
 
 if(WITH_LASZIP)
     find_package(LASzip 1.0.1)
-    if(LASZIP_FOUND)    
+    if(LASZIP_FOUND)
         set(CMAKE_REQUIRED_LIBRARIES "${LASZIP_LIBRARY}")
         include_directories(${LASZIP_INCLUDE_DIR})
-        mark_as_advanced(CLEAR LASZIP_INCLUDE_DIR) 
-        mark_as_advanced(CLEAR LASZIP_LIBRARY) 
-        mark_as_advanced(CLEAR LASZIP_VERSION) 
+        mark_as_advanced(CLEAR LASZIP_INCLUDE_DIR)
+        mark_as_advanced(CLEAR LASZIP_LIBRARY)
+        mark_as_advanced(CLEAR LASZIP_VERSION)
         set(PDAL_HAVE_LASZIP 1)
     else()
         set(LASZIP_LIBRARY "")
@@ -684,9 +695,9 @@ if(WITH_PYTHON)
     if(PYTHONLIBS_FOUND)
         set(CMAKE_REQUIRED_LIBRARIES "${PYTHON_LIBRARY}")
         include_directories(SYSTEM ${PYTHON_INCLUDE_DIR})
-        add_definitions(-DHAVE_PYTHON=1)    
+        add_definitions(-DHAVE_PYTHON=1)
         set(PDAL_HAVE_PYTHON 1)
-    
+
         find_package(NumPy 1.5 REQUIRED)
         include_directories(SYSTEM ${NUMPY_INCLUDE_DIR})
         message(STATUS "Found Python: ${PYTHON_LIBRARY}")
@@ -738,7 +749,7 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 configure_file(
   "${PROJECT_SOURCE_DIR}/gitsha.cpp.in"
   "${PROJECT_SOURCE_DIR}/src/gitsha.cpp")
-  
+
 set(pdal_defines_h_in "${CMAKE_CURRENT_SOURCE_DIR}/pdal_defines.h.in")
 set(pdal_defines_h "${CMAKE_CURRENT_BINARY_DIR}/include/pdal/pdal_defines.h")
 configure_file(${pdal_defines_h_in} ${pdal_defines_h})
@@ -794,7 +805,7 @@ SET(CPACK_PACKAGE_VENDOR "PDAL Development Team")
 
 set(CPACK_PACKAGE_FILE_NAME
   "${CMAKE_PROJECT_NAME}-${VERSION}")
-  
+
 set(CPACK_SOURCE_IGNORE_FILES
 "/\\\\.gitattributes;/\\\\.vagrant;/\\\\.DS_Store;/CVS/;/\\\\.git/;\\\\.swp$;~$;\\\\.\\\\#;/\\\\#")
 

@@ -8,7 +8,7 @@ P2G_HOME=$USR_LOCAL
 HEXER_HOME="/usr/local"
 SQLITE_HOME="/usr/local/opt/sqlite"
 SO_EXT=dylib
-EMBED=ON
+LAZPERF_HOME="/Users/hobu/dev/git/laz-perf"
 # CC=/usr/local/bin/gcc-4.8
 # CXX=/usr/local/bin/g++-4.8
 
@@ -26,6 +26,7 @@ CC=$CC CXX=$CXX cmake   -G "$CONFIG"  \
         -DCMAKE_INSTALL_PREFIX=/Users/hobu \
         -DWITH_ORACLE=ON \
         -DWITH_GEOTIFF=ON \
+        -DWITH_COMPRESSION=ON \
         -DWITH_SQLITE=ON \
         -DWITH_P2G=ON \
         -DWITH_HEXER=ON \
@@ -49,6 +50,7 @@ CC=$CC CXX=$CXX cmake   -G "$CONFIG"  \
         -DLASZIP_LIBRARY=${LASZIP_HOME}/lib/liblaszip.${SO_EXT} \
         -DLIBXML2_INCLUDE_DIR=${LIBXML2_HOME}/include/libxml2 \
         -DLIBXML2_LIBRARIES=${LIBXML2_HOME}/lib/libxml2.${SO_EXT} \
+        -DLAZPERF_INCLUDE_DIR=${LAZPERF_HOME}/ \
         -DSQLITE3_INCLUDE_DIR=${SQLITE_HOME}/include \
         -DSQLITE3_LIBRARY=${SQLITE_HOME}/lib/libsqlite3.${SO_EXT}
 

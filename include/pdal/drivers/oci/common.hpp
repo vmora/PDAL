@@ -40,6 +40,7 @@
 
 #include <pdal/pdal_internal.hpp>
 #include <pdal/Schema.hpp>
+#include <pdal/PointBuffer.hpp>
 
 namespace pdal
 {
@@ -145,7 +146,42 @@ public:
     Schema* schema;
     std::vector<Dimension> dimensions;
     bool m_fetched;  // Set when fetched but not initialized
+    MetadataNode m_metadata;
+    bool m_isCompressed;
+    std::string m_compVersion;
 };
+
+
+struct OCICompressionStream {
+    OCICompressionStream() : buf(), idx(0) {}
+
+    void putBytes(const unsigned char* b, size_t len) {
+        while(len --) {
+            buf.push_back(*b++);
+        }
+    }
+
+    void putByte(const unsigned char b) {
+        buf.push_back(b);
+    }
+
+    unsigned char getByte() {
+        return buf[idx++];
+    }
+
+    void getBytes(unsigned char *b, int len) {
+        for (int i = 0 ; i < len ; i ++) {
+            b[i] = getByte();
+        }
+    }
+
+    std::vector<unsigned char> buf;
+    size_t idx;
+};
+
+std::vector<char> getBytes(pdal::PointBuffer buffer, pdal::PointContext ctx);
+
+
 typedef std::shared_ptr<Block> BlockPtr;
 
 PDAL_DLL Connection connect(std::string connSpec);

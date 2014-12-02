@@ -7,7 +7,7 @@
         <Option name="compression">
             false
         </Option>
-        <Filter type="filters.selector">
+        <!-- <Filter type="filters.selector">
           <Option name="ignore">
             <Options>
               <Option name="dimension">ReturnNumber</Option>
@@ -29,8 +29,8 @@
               <Option name="dimension">Intensity</Option>
               <Option name="dimension">Classification</Option>
             </Options>
-          </Option>     
-        <!-- <Filter type="filters.inplacereprojection">
+          </Option> -->
+        <Filter type="filters.inplacereprojection">
             <Option name="out_srs">
                 EPSG:4326
             </Option>
@@ -39,10 +39,10 @@
             </Option>
             <Option name="scale_y">
                 0.0000001
-            </Option> -->
+            </Option>
         <Reader type="drivers.oci.reader">
             <Option name="query">
-                            
+
                 SELECT l."OBJ_ID", l."BLK_ID", l."BLK_EXTENT", l."BLK_DOMAIN",
                        l."PCBLK_MIN_RES", l."PCBLK_MAX_RES", l."NUM_POINTS",
                        l."NUM_UNSORTED_POINTS", l."PT_SORT_DIM", l."POINTS", b.cloud
@@ -50,18 +50,15 @@
                  WHERE l.obj_id = b.id and l.obj_id in (1)
                 order by l.obj_id
             </Option>
-            <Option name="xml_schema_dump">
-                flipped-dimensions.xml
-            </Option>
             <Option name="connection">
                 grid/grid@localhost/vm
             </Option>
-            
+
             <!-- <Option name="populate_pointsourceid">
                 true
-            </Option>       -->      
+            </Option>       -->
         </Reader>
-    </Filter>
+    <!-- </Filter> -->
     </Filter>
     </Writer>
 </Pipeline>

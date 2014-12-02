@@ -211,6 +211,50 @@ public:
     */
     pdal::Bounds<double> calculateBounds(bool bis3d=true) const;
 
+    inline std::ostream& getBytes(std::ostream& strm, PointId start, PointId end) const
+    {
+        char buf[sizeof(double)];
+        Schema* schema = m_context.schema();
+        schema::index_by_index const& dimensions = schema->getDimensions().get<schema::index>();
+        for (PointId i = start; i < end; ++i)
+        {
+            for (const auto& dim : dimensions)
+            {
+                getFieldInternal(dim, i, buf);
+                strm.write(buf, dim.getByteSize());
+            }
+        }
+        return strm;
+    }
+
+    PointBuffer( std::istream& strm, PointContext ctx, PointId start, PointId end) : m_context(ctx)
+    {
+//
+//
+        Schema* schema = m_context.schema();
+        size_t pointSize = schema->getByteSize();
+
+        std::vector<char> bytes;
+        bytes.resize(pointSize);
+
+        char* start_pos = bytes.data();
+        schema::index_by_index const& dimensions = schema->getDimensions().get<schema::index>();
+        for (PointId i = start; i < end; ++i)
+        {
+            char* pos = start_pos;
+            strm.read(pos, pointSize);
+            if (strm.eof() )
+            {
+                break; // done
+            }
+            for (const auto& dim : dimensions)
+            {
+                setFieldInternal(dim, i, pos);
+                pos += dim.getByteSize();
+            }
+//
+        }
+    }
 protected:
     Bounds<double> m_bounds;
     PointContext m_context;

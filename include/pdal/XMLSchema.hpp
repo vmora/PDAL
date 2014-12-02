@@ -138,10 +138,13 @@ public:
     Reader(std::istream* xml, std::istream* schema);
     ~Reader();
 
-    inline pdal::Schema const& getSchema()
+    pdal::Schema const& getSchema()
     {
         return m_schema;
     }
+    MetadataNode getMetadata() const
+        { return m_metadata;}
+
 
 
 protected:
@@ -155,8 +158,8 @@ private:
     Reader(const Reader&); // not implemented;
 
 #ifdef PDAL_HAVE_LIBXML2
-    pdal::Metadata LoadMetadata(xmlNode* node);
-    
+    MetadataNode LoadMetadata(xmlNode* node, MetadataNode& input);
+
 
     std::string remapOldNames(std::string const& input);
 
@@ -169,6 +172,7 @@ private:
 
     xmlParserOption m_doc_options;
 #endif
+    MetadataNode m_metadata;
 
     void* m_global_context;
 
@@ -186,8 +190,8 @@ class PDAL_DLL Writer
 public:
     Writer(pdal::Schema const& schema);
     ~Writer() {}
-    
-    void setMetadata(MetadataNode& m)
+
+    void setMetadata(MetadataNode m)
         { m_metadata = m; }
     std::string getXML();
 protected:

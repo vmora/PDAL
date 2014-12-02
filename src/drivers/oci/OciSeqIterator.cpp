@@ -36,6 +36,7 @@
 #include <pdal/PointBuffer.hpp>
 #include <pdal/Utils.hpp>
 #include <pdal/drivers/oci/OciSeqIterator.hpp>
+#include <pdal/Compression.hpp>
 
 #ifdef USE_PDAL_PLUGIN_OCI
 MAKE_READER_CREATOR(ociReader, pdal::drivers::oci::Reader)
@@ -93,17 +94,17 @@ point_count_t OciSeqIterator::readDimMajor(PointBuffer& buffer, BlockPtr block,
     for (size_t d = 0; d < m_dims.size(); ++d)
     {
         PointId nextId = startId;
-        // if the block doesn't have the dimension, don't 
+        // if the block doesn't have the dimension, don't
         // copy it
         Dimension* source_d = block->schema->getDimensionPtr(m_dims[d]->getName());
         if (!source_d)
             continue;
-        
+
         // char *pos = seekDimMajor(d, block);
         char* pos =  block->data() +
             (source_d->getByteOffset() * block->numPoints()) +
             (source_d->getByteSize() * block->numRead());
-        
+
         blockRemaining = numRemaining;
         numRead = 0;
         while (numRead < numPts && blockRemaining > 0)
@@ -129,7 +130,7 @@ point_count_t OciSeqIterator::readPointMajor(PointBuffer& buffer,
 
     // char *pos = seekPointMajor(block);
 
-    
+
     while (numRead < numPts && numRemaining > 0)
     {
         for (size_t d = 0; d < m_dims.size(); ++d)
@@ -137,9 +138,9 @@ point_count_t OciSeqIterator::readPointMajor(PointBuffer& buffer,
             Dimension* source_d = block->schema->getDimensionPtr(m_dims[d]->getName());
             if (!source_d)
             {
-                continue;            
+                continue;
             }
-            char *pos = block->data() + 
+            char *pos = block->data() +
                        ((block->numRead()+numRead) * block->schema->getByteSize()) +
                         source_d->getByteOffset();
 
@@ -159,7 +160,7 @@ char *OciSeqIterator::seekDimMajor(size_t dimIdx, BlockPtr block)
 {
     size_t size = 0;
     for (size_t d = 0; d < dimIdx; ++d)
-        size += m_dims[d]->getByteSize();    
+        size += m_dims[d]->getByteSize();
     return block->data() +
         (size * block->numPoints()) +
         (m_dims[dimIdx]->getByteSize() * block->numRead());
@@ -170,7 +171,7 @@ char *OciSeqIterator::seekPointMajor(BlockPtr block)
 {
     size_t size = 0;
     for (size_t d = 0; d < m_dims.size(); ++d)
-        size += m_dims[d]->getByteSize();    
+        size += m_dims[d]->getByteSize();
     return block->data() + (block->numRead() * size);
 }
 
@@ -186,6 +187,23 @@ point_count_t OciSeqIterator::readImpl(PointBuffer& buffer, point_count_t count)
         if (m_block->numRemaining() == 0)
             if (!readOci(m_stmt, m_block))
                 return totalNumRead;
+
+        MetadataNode comp = m_block->m_metadata.findChild("compression");
+        if (!comp.empty())
+        {
+            m_block->m_isCompressed = boost::iequals(comp.value(), "lazperf");
+            m_block->m_compVersion =  m_block->m_metadata.findChild("version").value() ;
+        }
+
+        if (m_block->m_isCompressed)
+        {
+            OCICompressionStream compStream;
+
+            compStream.buf = m_block->chunk;
+            std::vector<uint8_t> bytes = compression::Decompress<OCICompressionStream>(m_block->schema, compStream, m_block->num_points, compression::CompressionType::Lazperf);
+            m_block->chunk = bytes;
+        }
+
         PointId bufBegin = buffer.size();
         point_count_t numRead = read(buffer, m_block, count - totalNumRead);
         PointId bufEnd = bufBegin + numRead;
@@ -236,7 +254,7 @@ void OciSeqIterator::normalize(PointBuffer& buffer, BlockPtr block,
     // Get the value from the buffer unscaled.  Scale the value as specified
     // in the block (the clould's scaling) and then set the value back into
     // the buffer, taking the final scaling out.
-    
+
     for (PointId i = begin; i < end; ++i)
     {
         double d;
@@ -271,7 +289,7 @@ void OciSeqIterator::setpointids(PointBuffer& buffer, BlockPtr block,
             buffer.setField<uint16_t>(*point_source_field, i, t);
         }
     }
-    
+
 }
 
 // Read a block (set of points) from the database.
@@ -291,6 +309,7 @@ bool OciSeqIterator::readOci(Statement stmt, BlockPtr block)
     Schema *s = findSchema(stmt, block);
     block->initialize(s);
     block->clearFetched();
+
     return true;
 }
 

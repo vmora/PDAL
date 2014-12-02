@@ -111,6 +111,7 @@ private:
     Dimension *m_dimY;
     Dimension *m_dimZ;
     std::map<int32_t, Schema> m_schemas;
+    OCICompressionStream m_compStream;
 };
 
 } // namespace sequential

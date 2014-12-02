@@ -43,6 +43,28 @@
 
 #include <vector>
 
+namespace
+{
+    std::string sanitize(const std::string& name)
+    {
+        auto ischar = [](char c)
+        {
+            return c == ';' || c == ':' || c == ' ' || c == '\'' ||
+                c == '\"' || c == '[' || c ==']';
+        };
+
+        std::string v;
+        for (size_t i = 0; i < name.size(); ++i)
+        {
+            if (ischar(name[i]))
+                v += '_';
+            else
+                v += name[i];
+        }
+        return v;
+    }
+}
+
 namespace pdal
 {
 
@@ -58,7 +80,7 @@ public:
     /// Constructs a ByteArray instance with the given array of data.
     ByteArray(std::vector<boost::uint8_t> const& data) : m_bytes(data)
     {}
-    
+
     ByteArray()
     {}
 
@@ -101,6 +123,12 @@ class MetadataNodeImpl
     friend class MetadataNode;
 
 private:
+    MetadataNodeImpl(const std::string& name)
+    {
+      m_name = sanitize(name);
+    }
+    MetadataNodeImpl()
+    {}
     MetadataNodeImplPtr add(const std::string& name)
     {
         MetadataNodeImplPtr sub(new MetadataNodeImpl());
@@ -288,7 +316,11 @@ class PDAL_DLL MetadataNode
         bool operator != (const MetadataNode& m1, const MetadataNode& m2);
 
 public:
+
     MetadataNode() : m_impl(new MetadataNodeImpl())
+        {}
+
+    MetadataNode(const std::string& name) : m_impl(new MetadataNodeImpl(name))
         {}
 
     MetadataNode add(const std::string& name)
@@ -309,7 +341,7 @@ public:
         const std::string& descrip = std::string())
     {
         MetadataNodeImplPtr impl = m_impl->add(name);
-        std::vector<uint8_t> v(size); 
+        std::vector<uint8_t> v(size);
         memcpy(v.data(), buf, size);
         impl->setValue(Utils::base64_encode(v));
         impl->m_type = "base64Binary";
@@ -458,7 +490,7 @@ class Metadata
 public:
     Metadata()
     {}
-   
+
     Metadata(const std::string& name) : m_name(name)
     {}
 

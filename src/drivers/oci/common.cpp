@@ -42,6 +42,8 @@
 #include <pdal/Schema.hpp>
 #include <pdal/Utils.hpp>
 #include <pdal/FileUtils.hpp>
+#include <pdal/Charbuf.hpp>
+#include <pdal/XMLSchema.hpp>
 
 namespace pdal
 {
@@ -107,7 +109,13 @@ Schema fetchSchema(Statement stmt, BlockPtr block)
         CPLFree(pc_schema);
     }
 
-    return Schema::from_xml(pc_schema_xml);
+    schema::Reader reader(pc_schema_xml, "");
+    block->m_metadata = reader.getMetadata();
+            std::ostream* out = FileUtils::createFile("comp-read-metadata.xml");
+        out->write(pc_schema_xml.c_str(), pc_schema_xml.size());
+        FileUtils::closeFile(out);
+        Schema output = reader.getSchema();
+    return output;
 }
 
 
@@ -158,12 +166,28 @@ void Block::initialize(Schema *s)
     dimupdate("X", m_scaleX);
     dimupdate("Y", m_scaleY);
     dimupdate("Z", m_scaleZ);
-    
+
     for(size_t i =0; i < s->size(); ++i)
     {
         dimensions.push_back(s->getDimension(i));
     }
     schema = s;
+}
+
+std::vector<char> getBytes(pdal::PointBuffer buffer, pdal::PointContext ctx)
+{
+    Schema* schema = ctx.schema();
+    size_t pointSize = schema->getByteSize();
+
+    std::vector<char> bytes;
+    uint64_t byteSize = (uint64_t)pointSize * (uint64_t)buffer.size();
+    bytes.resize(byteSize);
+
+    pdal::Charbuf buf(bytes);
+    std::ostream strm(&buf);
+    buffer.getBytes(strm, 0, buffer.size());
+
+    return bytes;
 }
 
 
