@@ -77,9 +77,6 @@ set(PDAL_BASE_HPP
 if (PDAL_HAVE_LIBXML2)
   SET (PDAL_XML_SRC XMLSchema.cpp)
 endif()
-if (PDAL_HAVE_LAZPERF)
-    SET (PDAL_COMPRESSION_SRC Compression.cpp)
-endif()
 
 set(PDAL_BASE_CPP
   Bounds.cpp
@@ -116,7 +113,7 @@ set(PDAL_BASE_CPP
   Writer.cpp
   third/md5-pdal.c
   ${PDAL_XML_SRC}
-  ${PDAL_COMPRESSION_SRC}
+
 )
 
 list (APPEND PDAL_CPP ${PDAL_BASE_CPP} )
