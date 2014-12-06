@@ -992,6 +992,8 @@ void Writer::writeTile(PointBuffer const& buffer)
     if (m_doCompression)
     {
         log()->get(logDEBUG4) << "compressing block " << outbufSize << std::endl;
+
+        size_t origSize(outbufSize);
         const char* start_pos = outbuf.get();
         const char* end_pos = start_pos + outbufSize;
 
@@ -1008,6 +1010,9 @@ void Writer::writeTile(PointBuffer const& buffer)
 
         log()->get(logDEBUG4) << "compressed block " << outbufSize << std::endl;
         blobPtr = (char*)compStream.buf.data();
+        if (origSize && outbufSize==0)
+            throw pdal_error("Compression failed to return any bytes. Is it enabled?");
+
     }
     else
     {
