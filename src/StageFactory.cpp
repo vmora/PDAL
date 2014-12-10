@@ -112,6 +112,7 @@ MAKE_FILTER_CREATOR(Crop, pdal::filters::Crop)
 MAKE_FILTER_CREATOR(Decimation, pdal::filters::Decimation)
 MAKE_FILTER_CREATOR(HexBin, pdal::filters::HexBin)
 MAKE_FILTER_CREATOR(InPlaceReprojection, pdal::filters::InPlaceReprojection)
+MAKE_FILTER_CREATOR(MortonOrdering, pdal::filters::MortonOrderFilter)
 #ifdef PDAL_HAVE_PCL
 MAKE_FILTER_CREATOR(PCLBlock, pdal::filters::PCLBlock)
 #endif
@@ -196,7 +197,7 @@ std::string StageFactory::inferReaderDriver(const std::string& filename)
     drivers["sbet"] = "drivers.sbet.reader";
     drivers["icebridge"] = "drivers.icebridge.reader";
     drivers["sqlite"] = "drivers.sqlite.reader";
-    
+
     if (ext == "") return "";
     ext = ext.substr(1, ext.length()-1);
     if (ext == "") return "";
@@ -220,7 +221,7 @@ std::string StageFactory::inferWriterDriver(const std::string& filename)
     drivers["xyz"] = "drivers.text.writer";
     drivers["txt"] = "drivers.text.writer";
     drivers["ntf"] = "drivers.nitf.writer";
-    drivers["sqlite"] = "drivers.sqlite.writer";    
+    drivers["sqlite"] = "drivers.sqlite.writer";
 
     if (boost::algorithm::iequals(filename, "STDOUT"))
     {
@@ -434,6 +435,7 @@ void StageFactory::registerKnownFilters()
     REGISTER_FILTER(Reprojection, pdal::filters::Reprojection);
     REGISTER_FILTER(HexBin, pdal::filters::HexBin);
     REGISTER_FILTER(InPlaceReprojection, pdal::filters::InPlaceReprojection);
+    REGISTER_FILTER(MortonOrdering, pdal::filters::MortonOrderFilter);
 #ifdef PDAL_HAVE_PCL
     REGISTER_FILTER(PCLBlock, pdal::filters::PCLBlock);
 #endif
@@ -627,17 +629,17 @@ std::map<std::string, pdal::StageInfo> const& StageFactory::getStageInfos() cons
 std::string StageFactory::toRST(std::string driverName) const
 {
     std::ostringstream os;
-    
+
     std::map<std::string, pdal::StageInfo> const& drivers = getStageInfos();
     typedef std::map<std::string, pdal::StageInfo>::const_iterator Iterator;
-    
+
     Iterator i = drivers.find(driverName);
     std::string headline("------------------------------------------------------------------------------------------");
-    
+
     os << headline << std::endl;
     os << "PDAL Options" << " (" << pdal::GetFullVersionString() << ")" <<std::endl;
     os << headline << std::endl << std::endl;
-    
+
     // If we were given an explicit driver name, only display that.
     // Otherwise, display output for all of the registered drivers.
     if ( i != drivers.end())
