@@ -111,16 +111,16 @@ Schema fetchSchema(Statement stmt, BlockPtr block)
 
     schema::Reader reader(pc_schema_xml, "");
     block->m_metadata = reader.getMetadata();
-            std::ostream* out = FileUtils::createFile("comp-read-metadata.xml");
-        out->write(pc_schema_xml.c_str(), pc_schema_xml.size());
-        FileUtils::closeFile(out);
+//             std::ostream* out = FileUtils::createFile("comp-read-metadata.xml");
+//         out->write(pc_schema_xml.c_str(), pc_schema_xml.size());
+//         FileUtils::closeFile(out);
         Schema output = reader.getSchema();
     return output;
 }
 
 
 Block::Block(Connection connection) : num_points(0), m_connection(connection),
-    m_num_remaining(0), m_fetched(false)
+    m_num_remaining(0), m_fetched(false), m_isCompressed(false)
 {
     m_connection->CreateType(&blk_extent);
     m_connection->CreateType(&blk_extent->sdo_ordinates,
