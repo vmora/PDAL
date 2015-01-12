@@ -56,12 +56,14 @@ def read_version(filename):
 
     token = 'PDAL_VERSION_STRING'
 
-    version = 'None'
+    version = None
     for line in data:
-        if str(token) in line:
+        #if we have PDAL_VERSION_STRING in the line
+        # and we haven't already set the versino
+        if str(token) in line and not version:
             import re
-            parts = re.split('[\sd\.d\.d]', line)
-            ints = [ int (i) for i in (parts[1], parts[2], parts[3])]
+            parts = re.split('[\"\sd\.d\.d*\"]', line)
+            ints = [ int (i) for i in (parts[2], parts[3], parts[4])]
             version = '%d.%d.%d' % (ints[0], ints[1], ints[2])
     return '%s'%(version)
 
