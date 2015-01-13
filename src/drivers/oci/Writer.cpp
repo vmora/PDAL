@@ -606,6 +606,9 @@ void Writer::createPCEntry(Schema const& buffer_schema)
     std::string schemaData;
     if (m_doCompression)
     {
+#ifndef PDAL_HAVE_LAZPERF
+        throw pdal_error("compression requested but LAZPERF not enabled!);
+#endif
 
         MetadataNode m("root");
         m.add("compression", "lazperf");
