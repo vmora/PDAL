@@ -41,6 +41,7 @@ namespace pdal
 
 void BpfCompressor::startBlock()
 {
+#ifdef PDAL_HAVE_ZLIB
     // Initialize the stream.
     m_strm.zalloc = Z_NULL;
     m_strm.zfree = Z_NULL;
@@ -63,11 +64,15 @@ void BpfCompressor::startBlock()
     // Make a new stream from our charbuf and push it so that future writes
     // to our stream go to the backing vector.
     m_out.pushStream(new std::ostream(&m_charbuf));
+#else
+    throw pdal_error("Can't write compressed stream without ZLIB support.");
+#endif
 }
 
 
 void BpfCompressor::compress()
 {
+#ifdef PDAL_HAVE_ZLIB
     // Note our position so that we know how much we've written.
     std::size_t rawWritten = m_out.position();
 
@@ -95,11 +100,15 @@ void BpfCompressor::compress()
     // push it.
     m_charbuf.initialize(m_inbuf.data(), m_inbuf.size());
     m_out.pushStream(new std::ostream(&m_charbuf));
+#else
+    throw pdal_error("Can't write compressed stream without ZLIB support.");
+#endif
 }
 
 
 void BpfCompressor::finish()
 {
+#ifdef PDAL_HAVE_ZLIB
     // Pop our special stream so that we can write the the file.
     m_out.popStream();
 
@@ -127,6 +136,9 @@ void BpfCompressor::finish()
 
     // Set the position back to the end of the block.
     blockEnd.rewind();
+#else
+    throw pdal_error("Can't write compressed stream without ZLIB support.");
+#endif
 }
    
 } // namespace pdal

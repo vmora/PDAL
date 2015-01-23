@@ -50,7 +50,18 @@ public:
             int compressionLevel = Z_DEFAULT_COMPRESSION) :
         m_out(out), m_inbuf(maxSize), m_blockStart(out), m_rawSize(0),
         m_compressedSize(0)
-    {}
+    {
+#ifndef PDAL_HAVE_ZLIB
+        (void)m_out;
+        (void)m_inbuf;
+        (void)m_blockStart;
+        (void)m_rawSize;
+        (void)m_compressedSize;
+        (void)m_charbuf;
+        (void)m_strm;
+        (void)m_tmpbuf;
+#endif
+    }
     void startBlock();
     void finish();
     void compress();
@@ -59,13 +70,13 @@ private:
     static const int CHUNKSIZE = 1000000;
 
     OLeStream& m_out;
-    Charbuf m_charbuf;
     std::vector<char> m_inbuf;
-    z_stream m_strm;
-    unsigned char m_tmpbuf[CHUNKSIZE];
     OStreamMarker m_blockStart;
     size_t m_rawSize;
     size_t m_compressedSize;
+    Charbuf m_charbuf;
+    z_stream m_strm;
+    unsigned char m_tmpbuf[CHUNKSIZE];
 };
 
 } // namespace pdal
