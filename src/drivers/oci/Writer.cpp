@@ -607,7 +607,7 @@ void Writer::createPCEntry(Schema const& buffer_schema)
     if (m_doCompression)
     {
 #ifndef PDAL_HAVE_LAZPERF
-        throw pdal_error("compression requested but LAZPERF not enabled!);
+        throw pdal_error("compression requested but LAZPERF not enabled!");
 #endif
 
         MetadataNode m("root");

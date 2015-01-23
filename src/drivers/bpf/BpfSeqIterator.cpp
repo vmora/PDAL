@@ -163,13 +163,13 @@ point_count_t BpfSeqIterator::readPointMajor(PointBuffer& data,
             float f;
 
             m_stream >> f;
-            data.setField(*m_dims[d].m_dim, nextId, f + m_dims[d].m_offset);
+            data.setField(*m_dims[d].m_dim, nextId, f);
         }
 
         // Transformation X, Y and Z
-        double x = data.getFieldAs<double>(*m_xDim, nextId);
-        double y = data.getFieldAs<double>(*m_yDim, nextId);
-        double z = data.getFieldAs<double>(*m_zDim, nextId);
+        double x = data.getFieldAs<double>(*m_xDim, nextId, false);
+        double y = data.getFieldAs<double>(*m_yDim, nextId, false);
+        double z = data.getFieldAs<double>(*m_zDim, nextId, false);
         m_header.m_xform.apply(x, y, z);
         data.setField(*m_xDim, nextId, x);
         data.setField(*m_yDim, nextId, y);
@@ -209,9 +209,9 @@ point_count_t BpfSeqIterator::readDimMajor(PointBuffer& data,
     // Transform X, Y and Z
     for (idx = startId; idx < data.size(); idx++)
     {
-        double x = data.getFieldAs<double>(*m_xDim, idx);
-        double y = data.getFieldAs<double>(*m_yDim, idx);
-        double z = data.getFieldAs<double>(*m_zDim, idx);
+        double x = data.getFieldAs<double>(*m_xDim, idx, false);
+        double y = data.getFieldAs<double>(*m_yDim, idx, false);
+        double z = data.getFieldAs<double>(*m_zDim, idx, false);
         m_header.m_xform.apply(x, y, z);
         data.setField(*m_xDim, idx, x);
         data.setField(*m_yDim, idx, y);
@@ -249,7 +249,8 @@ point_count_t BpfSeqIterator::readByteMajor(PointBuffer& data,
 
                 if (b)
                 {
-                    u.f = data.getFieldAs<float>(*m_dims[d].m_dim, nextId);
+                    u.f = data.getFieldAs<float>(*m_dims[d].m_dim, nextId,
+                        false);
                 }
                 uint8_t u8;
                 m_stream >> u8;
@@ -263,9 +264,9 @@ point_count_t BpfSeqIterator::readByteMajor(PointBuffer& data,
     // Transform X, Y and Z
     for (idx = startId; idx < data.size(); idx++)
     {
-        double x = data.getFieldAs<double>(*m_xDim, idx);
-        double y = data.getFieldAs<double>(*m_yDim, idx);
-        double z = data.getFieldAs<double>(*m_zDim, idx);
+        double x = data.getFieldAs<double>(*m_xDim, idx, false);
+        double y = data.getFieldAs<double>(*m_yDim, idx, false);
+        double z = data.getFieldAs<double>(*m_zDim, idx, false);
         m_header.m_xform.apply(x, y, z);
         data.setField(*m_xDim, idx, x);
         data.setField(*m_yDim, idx, y);

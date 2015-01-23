@@ -198,7 +198,7 @@ point_count_t OciSeqIterator::readImpl(PointBuffer& buffer, point_count_t count)
         if (m_block->m_isCompressed)
         {
 #ifndef PDAL_HAVE_LAZPERF
-            throw pdal_error("Data is compressed, but LAZPERF is not enabled!);
+            throw pdal_error("Data is compressed, but LAZPERF is not enabled!");
 #endif
             OCICompressionStream compStream;
 
