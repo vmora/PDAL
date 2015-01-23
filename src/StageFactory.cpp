@@ -137,6 +137,7 @@ MAKE_MULTIFILTER_CREATOR(Mosaic, pdal::filters::Mosaic)
 // define the functions to create the writers
 //
 MAKE_WRITER_CREATOR(LasWriter, pdal::drivers::las::Writer)
+MAKE_WRITER_CREATOR(BpfWriter, pdal::BpfWriter)
 
 #ifndef USE_PDAL_PLUGIN_TEXT
 MAKE_WRITER_CREATOR(TextWriter, pdal::drivers::text::Writer)
@@ -217,6 +218,7 @@ std::string StageFactory::inferWriterDriver(const std::string& filename)
     std::map<std::string, std::string> drivers;
     drivers["las"] = "drivers.las.writer";
     drivers["laz"] = "drivers.las.writer";
+    drivers["bpf"] = "drivers.bpf.writer";
     drivers["pcd"] = "drivers.text.writer";
     drivers["xyz"] = "drivers.text.writer";
     drivers["txt"] = "drivers.text.writer";
@@ -462,6 +464,7 @@ void StageFactory::registerKnownMultiFilters()
 void StageFactory::registerKnownWriters()
 {
     REGISTER_WRITER(LasWriter, pdal::drivers::las::Writer);
+    REGISTER_WRITER(BpfWriter, pdal::BpfWriter);
 
 #ifndef USE_PDAL_PLUGIN_TEXT
     REGISTER_WRITER(TextWriter, pdal::drivers::text::Writer);

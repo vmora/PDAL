@@ -40,13 +40,11 @@ namespace pdal
 {
 
 BpfReader::BpfReader(const Options& options) : Reader(options),
-    m_stream(options.getValueOrThrow<std::string>("filename")),
-    m_header(log())
+    m_stream(options.getValueOrThrow<std::string>("filename"))
 {}
 
 
-BpfReader::BpfReader(const std::string& filename) : m_stream(filename),
-    m_header(log())
+BpfReader::BpfReader(const std::string& filename) : m_stream(filename)
 {}
 
 
@@ -91,6 +89,12 @@ void BpfReader::initialize()
         m_stream.seek(m_header.m_len);
 }
 
+
+void BpfReader::processOptions(const Options&)
+{
+    m_header.setLog(log());
+}
+
 void BpfReader::buildSchema(Schema *schema)
 {
     for (size_t i = 0; i < m_dims.size(); ++i)
@@ -101,7 +105,7 @@ void BpfReader::buildSchema(Schema *schema)
         pd.setMaximum(dim.m_max);
         pd.setNumericOffset(dim.m_offset);
         pd.setNamespace("bpf");
-        m_schemaDims.push_back(schema->appendDimension(pd));
+        dim.m_dim = schema->appendDimension(pd);
     }
 }
 
@@ -160,8 +164,7 @@ bool BpfReader::readPolarData()
 
 StageSequentialIterator *BpfReader::createSequentialIterator() const
 {
-    return new BpfSeqIterator(m_schemaDims, m_header.m_numPts,
-        m_header.m_pointFormat, m_header.m_compression,
+    return new BpfSeqIterator(m_dims, m_header,
         const_cast<ILeStream&>(m_stream));
 }
 

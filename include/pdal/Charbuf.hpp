@@ -32,14 +32,18 @@
 * OF SUCH DAMAGE.
 ****************************************************************************/
 
+#pragma once
+
+#include <pdal/pdal_export.hpp>
 #include <streambuf>
+#include <iostream>
 #include <vector>
 
 namespace pdal
 {
 
 // Turns a vector into a streambuf.
-class Charbuf : public std::streambuf
+class PDAL_DLL Charbuf : public std::streambuf
 {
 public:
     Charbuf() : m_bufOffset(0)
@@ -52,15 +56,19 @@ public:
     void initialize(char *buf, size_t count, pos_type bufOffset = 0);
 
 protected:
-    pos_type seekpos(pos_type pos, std::ios_base::openmode which =
-        std::ios_base::in | std::ios_base::out);
-    pos_type seekoff(off_type off, std::ios_base::seekdir dir,
+    std::ios::pos_type seekpos(std::ios::pos_type pos,
+        std::ios_base::openmode which = std::ios_base::in | std::ios_base::out);
+    std::ios::pos_type seekoff(std::ios::off_type off,
+        std::ios_base::seekdir dir,
         std::ios_base::openmode which = std::ios_base::in | std::ios_base::out);
 
 private:
     // The offset allows one to use offsets when seeking that refer not to
     // the positions in the backing vector, but to some other reference point.
-    pos_type m_bufOffset;
+    std::ios::pos_type m_bufOffset;
+    // For the put pointer, it seems we need the beginning of the buffer
+    // in order to deal with offsets.
+    char *m_buf;
 };
 
-} //namespace
+} //namespace pdal

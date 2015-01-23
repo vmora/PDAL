@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2014, Andrew Bell
+* Copyright (c) 2015, Hobu Inc., hobu@hobu.co
 *
 * All rights reserved.
 *
@@ -34,48 +34,49 @@
 
 #pragma once
 
-#include <pdal/IStream.hpp>
-#include <pdal/Reader.hpp>
-#include <pdal/ReaderIterator.hpp>
+#include <vector>
+
+#include <pdal/OStream.hpp>
+#include <pdal/Writer.hpp>
 
 #include "BpfHeader.hpp"
 
 namespace pdal
 {
 
-class PDAL_DLL BpfReader : public Reader
+class Schema;
+
+class PDAL_DLL BpfWriter : public Writer
 {
 public:
-    SET_STAGE_NAME("drivers.bpf.reader", "Bpf Reader")
-    SET_STAGE_LINK("http://pdal.io/stages/drivers.bpf.reader.html")
-    SET_STAGE_ENABLED(true)
+    SET_STAGE_NAME("drivers.bpf.writer", "BPF Writer");
+    SET_STAGE_LINK("http://pdal.io/stages/writers.bpf.html")
+    SET_STAGE_ENABLED(true);
 
-    BpfReader(const Options&);
-    BpfReader(const std::string&);
+    static Options getDefaultOptions();
 
-    virtual void processOptions(const Options& options);
-    virtual boost::uint64_t getNumPoints() const
-        {  return m_header.m_numPts; }
-
-    StageSequentialIterator* createSequentialIterator() const;
-    StageRandomIterator* createRandomIterator(PointBuffer& buffer) const;
+    BpfWriter(const Options& options) : Writer(options)
+    {}
 
 private:
-    ILeStream m_stream;
+    OLeStream m_stream;
     BpfHeader m_header;
+    Schema *m_schema;
+    std::string m_filename;
     BpfDimensionList m_dims;
-    BpfUlemHeader m_ulemHeader;
-    std::vector<BpfUlemFrame> m_ulemFrames;
-    BpfPolarHeader m_polarHeader;
-    std::vector<BpfPolarFrame> m_polarFrames;
 
-    virtual void initialize();
-    virtual void buildSchema(Schema *schema);
-    bool readUlemData();
-    bool readUlemFiles();
-    bool readHeaderExtraData();
-    bool readPolarData();
+    virtual void processOptions(const Options& options);
+    virtual void ready(PointContext ctx);
+    virtual void write(const PointBuffer& buf);
+    virtual void done(PointContext ctx);
+
+    double getAdjustedValue(const PointBuffer& buf, BpfDimension& bpfDim,
+        PointId idx);
+    void loadBpfDimensions(PointContext ctx);
+    void writePointMajor(const PointBuffer& buf);
+    void writeDimMajor(const PointBuffer& buf);
+    void writeByteMajor(const PointBuffer& buf);
+    void writeCompressedBlock(char *buf, size_t size);
 };
 
-} // namespace
-
+} // namespace pdal

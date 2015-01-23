@@ -48,16 +48,27 @@
 namespace pdal
 {
 
-BpfSeqIterator::BpfSeqIterator(const std::vector<Dimension *>& dims,
-    point_count_t numPoints, BpfFormat::Enum pointFormat, bool compression,
-    ILeStream& stream) :
-    m_dims(dims), m_numPoints(numPoints), m_pointFormat(pointFormat),
-    m_stream(stream), m_index(0), m_start(m_stream.position())
+BpfSeqIterator::BpfSeqIterator(const BpfDimensionList& dims,
+        const BpfHeader& header, ILeStream& stream) :
+    m_dims(dims), m_header(header), m_stream(stream), m_index(0),
+    m_start(m_stream.position()), m_xDim(NULL), m_yDim(NULL), m_zDim(NULL)
 {
-    if (compression)
+    for (auto & d : m_dims)
+    {
+        if (d.m_label == "X")
+            m_xDim = d.m_dim;
+        if (d.m_label == "Y")
+            m_yDim = d.m_dim;
+        if (d.m_label == "Z")
+            m_zDim = d.m_dim;
+    }
+    if (!m_xDim || !m_yDim || !m_zDim)
+        throw pdal_error("Can't read BPF file without X, Y and Z dimensions.");
+
+    if (m_header.m_compression)
     {
 #ifdef PDAL_HAVE_ZLIB
-        m_deflateBuf.resize(m_numPoints * m_dims.size() * sizeof(float));
+        m_deflateBuf.resize(m_header.m_numPts * m_dims.size() * sizeof(float));
         size_t index = 0;
         size_t bytesRead = 0;
         do
@@ -111,7 +122,7 @@ size_t BpfSeqIterator::readBlock(std::vector<char>& outBuf, size_t index)
     
 point_count_t BpfSeqIterator::read(PointBuffer& data, point_count_t count)
 {
-    switch (m_pointFormat)
+    switch (m_header.m_pointFormat)
     {
     case BpfFormat::PointMajor:
         return readPointMajor(data, count);
@@ -129,13 +140,13 @@ boost::uint64_t BpfSeqIterator::skipImpl(boost::uint64_t pointsToSkip)
 {
     point_count_t lastIndex = m_index;
     m_index += (point_count_t)pointsToSkip;
-    m_index = std::min(m_index, m_numPoints);
+    m_index = std::min(m_index, size_t(m_header.m_numPts));
     return std::min((point_count_t)pointsToSkip, m_index - lastIndex);
 }
 
 bool BpfSeqIterator::atEndImpl() const
 {
-    return m_index >= m_numPoints;
+    return m_index >= m_header.m_numPts;
 }
 
 point_count_t BpfSeqIterator::readPointMajor(PointBuffer& data,
@@ -145,15 +156,25 @@ point_count_t BpfSeqIterator::readPointMajor(PointBuffer& data,
     PointId idx = m_index;
     point_count_t numRead = 0;
     seekPointMajor(idx);
-    while (numRead < count && idx < m_numPoints)
+    while (numRead < count && idx < m_header.m_numPts)
     {
         for (size_t d = 0; d < m_dims.size(); ++d)
         {
             float f;
 
             m_stream >> f;
-            data.setField<float>(*m_dims[d], nextId, f);
+            data.setField(*m_dims[d].m_dim, nextId, f + m_dims[d].m_offset);
         }
+
+        // Transformation X, Y and Z
+        double x = data.getFieldAs<double>(*m_xDim, nextId);
+        double y = data.getFieldAs<double>(*m_yDim, nextId);
+        double z = data.getFieldAs<double>(*m_zDim, nextId);
+        m_header.m_xform.apply(x, y, z);
+        data.setField(*m_xDim, nextId, x);
+        data.setField(*m_yDim, nextId, y);
+        data.setField(*m_zDim, nextId, z);
+
         idx++;
         numRead++;
         nextId++;
@@ -174,15 +195,29 @@ point_count_t BpfSeqIterator::readDimMajor(PointBuffer& data,
         PointId nextId = startId;
         numRead = 0;
         seekDimMajor(d, idx);
-        for (; numRead < count && idx < m_numPoints; idx++, numRead++, nextId++)
+        for (; numRead < count && idx < m_header.m_numPts;
+            idx++, numRead++, nextId++)
         {
             float f;
 
             m_stream >> f;
-            data.setField<float>(*m_dims[d], nextId, f);
+            data.setField<float>(*m_dims[d].m_dim, nextId, f);
         }
     }
     m_index = idx;
+
+    // Transform X, Y and Z
+    for (idx = startId; idx < data.size(); idx++)
+    {
+        double x = data.getFieldAs<double>(*m_xDim, idx);
+        double y = data.getFieldAs<double>(*m_yDim, idx);
+        double z = data.getFieldAs<double>(*m_zDim, idx);
+        m_header.m_xform.apply(x, y, z);
+        data.setField(*m_xDim, idx, x);
+        data.setField(*m_yDim, idx, y);
+        data.setField(*m_zDim, idx, z);
+    }
+
     return numRead;
 }
 
@@ -201,7 +236,7 @@ point_count_t BpfSeqIterator::readByteMajor(PointBuffer& data,
             numRead = 0;
             PointId nextId = startId;
             seekByteMajor(d, b, idx);
-            for (;numRead < count && idx < m_numPoints;
+            for (;numRead < count && idx < m_header.m_numPts;
                 idx++, numRead++, nextId++)
             {
                 union 
@@ -214,16 +249,29 @@ point_count_t BpfSeqIterator::readByteMajor(PointBuffer& data,
 
                 if (b)
                 {
-                    u.f = data.getField<float>(*m_dims[d], nextId);
+                    u.f = data.getFieldAs<float>(*m_dims[d].m_dim, nextId);
                 }
                 uint8_t u8;
                 m_stream >> u8;
                 u.u32 |= ((uint32_t)u8 << (b * CHAR_BIT));
-                data.setField<float>(*m_dims[d], nextId, u.f);
+                data.setField(*m_dims[d].m_dim, nextId, u.f);
             }
         }
     }
     m_index = idx;
+
+    // Transform X, Y and Z
+    for (idx = startId; idx < data.size(); idx++)
+    {
+        double x = data.getFieldAs<double>(*m_xDim, idx);
+        double y = data.getFieldAs<double>(*m_yDim, idx);
+        double z = data.getFieldAs<double>(*m_zDim, idx);
+        m_header.m_xform.apply(x, y, z);
+        data.setField(*m_xDim, idx, x);
+        data.setField(*m_yDim, idx, y);
+        data.setField(*m_zDim, idx, z);
+    }
+
     return numRead;
 }
 
@@ -235,7 +283,7 @@ void BpfSeqIterator::seekPointMajor(uint32_t ptIdx)
 
 void BpfSeqIterator::seekDimMajor(size_t dimIdx, uint32_t ptIdx)
 {
-    std::streamoff offset = ((sizeof(float) * dimIdx * m_numPoints) +
+    std::streamoff offset = ((sizeof(float) * dimIdx * m_header.m_numPts) +
         (sizeof(float) * ptIdx));
     m_stream.seek(m_start + offset);
 }
@@ -243,8 +291,8 @@ void BpfSeqIterator::seekDimMajor(size_t dimIdx, uint32_t ptIdx)
 void BpfSeqIterator::seekByteMajor(size_t dimIdx, size_t byteIdx, uint32_t ptIdx)
 {
     std::streamoff offset =
-        (dimIdx * m_numPoints * sizeof(float)) +
-        (byteIdx * m_numPoints) +
+        (dimIdx * m_header.m_numPts * sizeof(float)) +
+        (byteIdx * m_header.m_numPts) +
         ptIdx;
     m_stream.seek(m_start + offset);
 }

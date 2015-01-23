@@ -186,15 +186,19 @@ set(PDAL_BPF_HEADERS "${PDAL_HEADERS_DIR}/${PDAL_BPF_PATH}")
 set(PDAL_BPF_SRC "${PROJECT_SOURCE_DIR}/src/${PDAL_BPF_PATH}")
 
 set(PDAL_DRIVERS_BPF_HPP
+    "${PDAL_BPF_SRC}/BpfCompressor.hpp"
     "${PDAL_BPF_HEADERS}/BpfReader.hpp"
     "${PDAL_BPF_HEADERS}/BpfSeqIterator.hpp"
     "${PDAL_BPF_HEADERS}/BpfHeader.hpp"
+    "${PDAL_BPF_HEADERS}/BpfWriter.hpp"
 )
 
 set(PDAL_DRIVERS_BPF_CPP
+    "${PDAL_BPF_SRC}/BpfCompressor.cpp"
     "${PDAL_BPF_SRC}/BpfHeader.cpp"
     "${PDAL_BPF_SRC}/BpfReader.cpp"
     "${PDAL_BPF_SRC}/BpfSeqIterator.cpp"
+    "${PDAL_BPF_SRC}/BpfWriter.cpp"
 )
 
 list (APPEND PDAL_CPP ${PDAL_DRIVERS_BPF_CPP} )

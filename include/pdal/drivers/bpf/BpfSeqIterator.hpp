@@ -51,8 +51,7 @@ class PointBuffer;
 class BpfSeqIterator : public ReaderSequentialIterator
 {
 public:
-    BpfSeqIterator(const std::vector<Dimension *>& dims,
-        point_count_t numPoints, BpfFormat::Enum pointFormat, bool compression,
+    BpfSeqIterator(const BpfDimensionList& dims, const BpfHeader& header,
         ILeStream& stream);
     ~BpfSeqIterator();
 
@@ -77,11 +76,9 @@ private:
     void seekByteMajor(size_t dimIdx, size_t byteIdx, uint32_t ptIdx);
 
     /// Dimensions
-    std::vector<Dimension *> m_dims;
-    /// Total number of points in the file.
-    point_count_t m_numPoints;
-    /// Bpf point format being read.
-    BpfFormat::Enum m_pointFormat;
+    BpfDimensionList m_dims;
+    /// Bpf Header
+    const BpfHeader& m_header;
     /// Input stream
     ILeStream& m_stream;
     /// Index of the next point to read.
@@ -93,6 +90,12 @@ private:
     std::vector<char> m_deflateBuf;
     /// Streambuf for deflated data.
     Charbuf m_charbuf;
+    /// Pointer to the X dimension.
+    Dimension *m_xDim;
+    /// Pointer to the Y dimension.
+    Dimension *m_yDim;
+    /// Pointer to the Z dimension.
+    Dimension *m_zDim;
 };
 
 } // namespace pdal

@@ -36,6 +36,7 @@
 #include <string>
 #include <vector>
 
+#include <pdal/Dimension.hpp>
 #include <pdal/Log.hpp>
 
 #pragma once
@@ -44,12 +45,35 @@ namespace pdal
 {
 
 class ILeStream;
+class OLeStream;
+
 
 struct BpfMuellerMatrix
 {
+    BpfMuellerMatrix()
+    {
+        static const double vals[] = {1.0, 0.0, 0.0, 0.0,
+                         0.0, 1.0, 0.0, 0.0,
+                         0.0, 0.0, 1.0, 0.0,
+                         0.0, 0.0, 0.0, 1.0};
+        memcpy(m_vals, vals, sizeof(vals));
+    }
+
     double m_vals[16];
+
+    void apply(double& x, double& y, double& z) const
+    {
+        double w = x * m_vals[12] + y * m_vals[13] + z * m_vals[14] +
+            m_vals[15];
+
+        x = (x * m_vals[0] + y * m_vals[1] + z * m_vals[2] + m_vals[3]) / w;
+        y = (x * m_vals[4] + y * m_vals[5] + z * m_vals[6] + m_vals[7]) / w;
+        z = (x * m_vals[8] + y * m_vals[9] + z * m_vals[10] + m_vals[11]) / w;
+    }
 };
+
 ILeStream& operator >> (ILeStream& stream, BpfMuellerMatrix& m);
+OLeStream& operator << (OLeStream& stream, BpfMuellerMatrix& m);
 
 //ABELL - Replace with strongly-typed enum C++11
 namespace BpfFormat
@@ -62,22 +86,47 @@ enum Enum
 };
 }
 
+namespace BpfCoordType
+{
+enum Enum
+{
+    None,
+    UTM,
+    TCR,
+    ENU
+};
+}
+
+namespace BpfCompression
+{
+enum Enum
+{
+    None,
+    QuickLZ,
+    FastLZ,
+    Zlib
+};
+}
+
 struct BpfDimension
 {
     double m_offset;
     double m_min;
     double m_max;
     std::string m_label;
+    Dimension *m_dim;
 
     static bool read(ILeStream& stream, std::vector<BpfDimension>& dims,
         size_t start);
+    static bool write(OLeStream& stream, std::vector<BpfDimension>& dims);
 };
+typedef std::vector<BpfDimension> BpfDimensionList;
 
 struct BpfHeader
 {
-    BpfHeader(LogPtr log) : m_version(0), m_len(0), m_numDim(0),
+    BpfHeader() : m_version(0), m_len(0), m_numDim(0),
         m_compression(0), m_numPts(0), m_coordId(0), m_spacing(0.0),
-        m_startTime(0.0), m_endTime(0.0), m_log(log)
+        m_startTime(0.0), m_endTime(0.0)
     {}
 
     int32_t m_version;
@@ -96,10 +145,14 @@ struct BpfHeader
     std::vector<BpfDimension> m_staticDims;
     LogPtr m_log;
 
+    void setLog(const LogPtr& log)
+        { m_log = log; }
+    bool write(OLeStream& stream);
     bool read(ILeStream& stream);
     bool readV3(ILeStream& stream);
     bool readV1(ILeStream& stream);
-    bool readDimensions(ILeStream& stream, std::vector<BpfDimension>& dims);
+    bool readDimensions(ILeStream& stream, BpfDimensionList& dims);
+    void writeDimensions(OLeStream& stream, BpfDimensionList& dims);
     void dump();
 };
 

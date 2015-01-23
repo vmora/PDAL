@@ -43,6 +43,7 @@
 #include <pdal/drivers/las/Writer.hpp>
 
 #include <pdal/drivers/bpf/BpfReader.hpp>
+#include <pdal/drivers/bpf/BpfWriter.hpp>
 
 #include <pdal/drivers/sbet/Reader.hpp>
 

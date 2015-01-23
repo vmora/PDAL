@@ -1,5 +1,5 @@
 /******************************************************************************
-* Copyright (c) 2014, Andrew Bell
+* Copyright (c) 2015, Hobu Inc., hobu@hobu.co
 *
 * All rights reserved.
 *
@@ -34,48 +34,38 @@
 
 #pragma once
 
-#include <pdal/IStream.hpp>
-#include <pdal/Reader.hpp>
-#include <pdal/ReaderIterator.hpp>
+#include <ostream>
+#include <zlib.h>
 
-#include "BpfHeader.hpp"
+#include <pdal/Charbuf.hpp>
+#include <pdal/OStream.hpp>
 
 namespace pdal
 {
 
-class PDAL_DLL BpfReader : public Reader
+class BpfCompressor
 {
 public:
-    SET_STAGE_NAME("drivers.bpf.reader", "Bpf Reader")
-    SET_STAGE_LINK("http://pdal.io/stages/drivers.bpf.reader.html")
-    SET_STAGE_ENABLED(true)
-
-    BpfReader(const Options&);
-    BpfReader(const std::string&);
-
-    virtual void processOptions(const Options& options);
-    virtual boost::uint64_t getNumPoints() const
-        {  return m_header.m_numPts; }
-
-    StageSequentialIterator* createSequentialIterator() const;
-    StageRandomIterator* createRandomIterator(PointBuffer& buffer) const;
-
+    BpfCompressor(OLeStream& out, size_t maxSize,
+            int compressionLevel = Z_DEFAULT_COMPRESSION) :
+        m_out(out), m_inbuf(maxSize), m_blockStart(out), m_rawSize(0),
+        m_compressedSize(0)
+    {}
+    void startBlock();
+    void finish();
+    void compress();
+   
 private:
-    ILeStream m_stream;
-    BpfHeader m_header;
-    BpfDimensionList m_dims;
-    BpfUlemHeader m_ulemHeader;
-    std::vector<BpfUlemFrame> m_ulemFrames;
-    BpfPolarHeader m_polarHeader;
-    std::vector<BpfPolarFrame> m_polarFrames;
+    static const int CHUNKSIZE = 1000000;
 
-    virtual void initialize();
-    virtual void buildSchema(Schema *schema);
-    bool readUlemData();
-    bool readUlemFiles();
-    bool readHeaderExtraData();
-    bool readPolarData();
+    OLeStream& m_out;
+    Charbuf m_charbuf;
+    std::vector<char> m_inbuf;
+    z_stream m_strm;
+    unsigned char m_tmpbuf[CHUNKSIZE];
+    OStreamMarker m_blockStart;
+    size_t m_rawSize;
+    size_t m_compressedSize;
 };
 
-} // namespace
-
+} // namespace pdal
