@@ -408,7 +408,8 @@ inline T PointBuffer::getFieldAs(Dimension::Id::Enum dim,
     Dimension::Detail *dd = m_context.dimDetail(dim);
     double val;
 
-    switch (dd->type())
+    Dimension::Type::Enum type = dd ? dd->type() : Dimension::Type::None;
+    switch (type)
     {
     case Dimension::Type::Float:
         val = getFieldInternal<float>(dim, pointIndex);
@@ -467,7 +468,7 @@ inline T PointBuffer::getFieldAs(Dimension::Id::Enum dim,
         std::ostringstream oss;
         oss << "Unable to fetch data and convert as requested: ";
         oss << Dimension::name(dim) << ":" <<
-            Dimension::interpretationName(dd->type()) <<
+            Dimension::interpretationName(type) <<
             "(" << (double)val << ") -> " << Utils::typeidName<T>();
         throw pdal_error(oss.str());
     }

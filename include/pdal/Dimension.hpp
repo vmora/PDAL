@@ -147,6 +147,11 @@ struct Detail
         { return Dimension::base(m_type); }
 };
 
+template<typename T>
+struct TypedDetail : public Detail
+{
+};
+    
 namespace Id
 {
 enum Enum

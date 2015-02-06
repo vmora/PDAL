@@ -57,10 +57,18 @@ struct DimInfo
     DimInfo() : m_detail(Dimension::COUNT), m_nextFree(Dimension::PROPRIETARY)
         {}
 
-    std::vector<Dimension::Detail> m_detail;
+    std::vector<Dimension::Detail *> m_detail;
     Dimension::IdList m_used;
     std::map<std::string, Dimension::Id::Enum> m_propIds;
     int m_nextFree;
+
+    Dimension::Type::Enum type(Dimension::Id::Enum id)
+    {
+        return (m_detail[id] ? m_detail[id]->type() : Dimension::Type::None);
+    }
+    size_t size(Dimension::Id::Enum id)
+        { return (m_detail[id] ? m_detail[id]->size() : 0); }
+    
 };
 typedef std::shared_ptr<DimInfo> DimInfoPtr;
 
@@ -121,11 +129,10 @@ public:
     // is already larger, this does nothing.
     void registerDim(Dimension::Id::Enum id, Dimension::Type::Enum type)
     {
-        Dimension::Detail& dd = m_dims->m_detail[id];
-        if (dd.type() == Dimension::Type::None)
+        Dimension::Type::Enum oldType = m_dims->type(id);
+        if (oldType == Dimension::Type::None)
             m_dims->m_used.push_back(id);
-        dd.m_type = resolveType(type, dd.m_type);
-        update();
+        update(id, oldType, type);
     }
 
     // The type and size are REQUESTS, not absolutes.  If someone else
@@ -135,6 +142,7 @@ public:
         Dimension::Type::Enum type)
     {
         Dimension::Id::Enum id;
+        Dimension::Type::Enum oldType = Dimension::Type::None;
 
         auto di = m_dims->m_propIds.find(name);
         if (di == m_dims->m_propIds.end())
@@ -144,10 +152,12 @@ public:
             m_dims->m_used.push_back(id);
         }
         else
+        {
             id = di->second;
-        m_dims->m_detail[id].m_type =
-            resolveType(m_dims->m_detail[id].m_type, type);
-        update();
+            oldType = m_dims->type(id);
+        }
+
+        update(id, oldType, type);
         return id;
     }
 
@@ -197,7 +207,7 @@ public:
 
     // @return whether or not the PointContext contains a given id
     bool hasDim(Dimension::Id::Enum id) const
-        { return m_dims->m_detail[id].m_type != Dimension::Type::None; }
+        { return m_dims->type(id) != Dimension::Type::None; }
 
     // @return reference to vector of currently used dimensions
     const Dimension::IdList& dims() const
@@ -218,21 +228,23 @@ public:
     {
         size_t size(0);
         for (const auto& d : m_dims->m_detail)
-            size += d.size();
+            size += d ? 0 : d->size();
         return size;
     }
 
 private:
     Dimension::Detail *dimDetail(Dimension::Id::Enum id) const
-        { return &(m_dims->m_detail[(size_t)id]); }
+        { return m_dims->m_detail[(size_t)id]; }
 
-    void update()
+    void update(Dimension::Id::Enum id, Dimension::Type::Enum oldType,
+        Dimension::Type::Enum type)
     {
-        auto sorter = [this](const Dimension::Id::Enum& d1,
-            const Dimension::Id::Enum& d2) -> bool
+        using namespace Dimension;
+
+        auto sorter = [this](const Id::Enum& d1, const Id::Enum& d2) -> bool
         {
-            size_t s1 = m_dims->m_detail[d1].size();
-            size_t s2 = m_dims->m_detail[d2].size();
+            size_t s1 = m_dims->size(d1);
+            size_t s2 = m_dims->size(d2);
             if (s1 > s2)
                 return true;
             if (s1 < s2)
@@ -240,13 +252,58 @@ private:
             return d1 < d2;
         };
 
-        Dimension::IdList& used = m_dims->m_used;
+        type = resolveType(type, oldType);
+        if (type == oldType)
+            return;
+
+        delete m_dims->m_detail[id];
+        Detail *dd;
+        switch (type)
+        {
+        case Type::Double:
+            dd = new TypedDetail<double>;
+            break;
+        case Type::Float: 
+            dd = new TypedDetail<float>;
+            break;
+        case Type::Unsigned8: 
+            dd = new TypedDetail<uint8_t>;
+            break;
+        case Type::Unsigned16: 
+            dd = new TypedDetail<uint16_t>;
+            break;
+        case Type::Unsigned32: 
+            dd = new TypedDetail<uint32_t>;
+            break;
+        case Type::Unsigned64: 
+            dd = new TypedDetail<uint64_t>;
+            break;
+        case Type::Signed8: 
+            dd = new TypedDetail<int8_t>;
+            break;
+        case Type::Signed16: 
+            dd = new TypedDetail<int16_t>;
+            break;
+        case Type::Signed32: 
+            dd = new TypedDetail<int32_t>;
+            break;
+        case Type::Signed64: 
+            dd = new TypedDetail<int64_t>;
+            break;
+        case Type::None:
+            dd = NULL;
+            assert(false);
+        }
+        dd->m_type = type;
+        m_dims->m_detail[id] = dd;
+
+        IdList& used = m_dims->m_used;
         std::sort(used.begin(), used.end(), sorter);
         int offset = 0;
         for (auto ui = used.begin(); ui != used.end(); ++ui)
         {
-            m_dims->m_detail[*ui].m_offset = offset;
-            offset += (int)m_dims->m_detail[*ui].size();
+            m_dims->m_detail[*ui]->m_offset = offset;
+            offset += (int)m_dims->m_detail[*ui]->size();
         }
         m_ptBuf->setPointSize((size_t)offset);
     }
